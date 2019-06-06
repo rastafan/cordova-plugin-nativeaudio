@@ -7,6 +7,7 @@
 
 package com.rjfun.cordova.plugin.nativeaudio;
 
+import java.io.FileDescriptor;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
@@ -29,14 +30,15 @@ public class NativeAudioAssetComplex implements OnPreparedListener, OnCompletion
 	private int state;
     Callable<Void> completeCallback;
 
-	public NativeAudioAssetComplex( AssetFileDescriptor afd, float volume)  throws IOException
+	public NativeAudioAssetComplex(FileDescriptor fd, float volume)  throws IOException
 	{
 		state = INVALID;
 		mp = new MediaPlayer();
         mp.setOnCompletionListener(this);
         mp.setOnPreparedListener(this);
-		mp.setDataSource( afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-		mp.setAudioStreamType(AudioManager.STREAM_MUSIC); 
+		//mp.setDataSource( afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+		mp.setDataSource(fd);
+		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
 		mp.setVolume(volume, volume);
 		mp.prepare();
 	}

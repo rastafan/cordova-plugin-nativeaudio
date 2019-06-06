@@ -7,6 +7,9 @@
 
 package com.rjfun.cordova.plugin.nativeaudio;
 
+import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -82,14 +85,17 @@ public class NativeAudio extends CordovaPlugin implements AudioManager.OnAudioFo
 					voices = data.getInt(3);
 				}
 
-				String fullPath = "www/".concat(assetPath);
+				//String fullPath = "www/".concat(assetPath);
 
-				Context ctx = cordova.getActivity().getApplicationContext();
-				AssetManager am = ctx.getResources().getAssets();
-				AssetFileDescriptor afd = am.openFd(fullPath);
+				//Context ctx = cordova.getActivity().getApplicationContext();
+
+				File f = new File(assetPath);
+				FileInputStream fis =  new FileInputStream(f);
+
+				FileDescriptor fd = fis.getFD();
 
 				NativeAudioAsset asset = new NativeAudioAsset(
-						afd, voices, (float)volume);
+						fd, voices, (float)volume);
 				assetMap.put(audioID, asset);
 
 				return new PluginResult(Status.OK);
