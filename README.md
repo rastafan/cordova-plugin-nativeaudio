@@ -1,4 +1,4 @@
-#!!!CAUTION!!!
+#!!!CAUTION!!!#
 
 This fork is still under development and may be modified at any time. It may also change the original purpose of this plugin entirely. Breaking changes may happen at any time.
 
