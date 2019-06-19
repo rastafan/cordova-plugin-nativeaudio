@@ -19,7 +19,21 @@ public class NativeAudioAsset
 
 	private ArrayList<NativeAudioAssetComplex> voices;
 	private int playIndex = 0;
-	
+
+	public NativeAudioAsset(String url, int numVoices, float volume) throws IOException
+	{
+		voices = new ArrayList<NativeAudioAssetComplex>();
+
+		if ( numVoices < 0 )
+			numVoices = 1;
+
+		for ( int x=0; x<numVoices; x++)
+		{
+			NativeAudioAssetComplex voice = new NativeAudioAssetComplex(url, volume);
+			voices.add( voice );
+		}
+	}
+
 	public NativeAudioAsset(FileDescriptor fd, int numVoices, float volume) throws IOException
 	{
 		voices = new ArrayList<NativeAudioAssetComplex>();
@@ -33,13 +47,17 @@ public class NativeAudioAsset
 			voices.add( voice );
 		}
 	}
-	
+
 	public void play(Callable<Void> completeCb) throws IOException
 	{
 		NativeAudioAssetComplex voice = voices.get(playIndex);
 		voice.play(completeCb);
 		playIndex++;
 		playIndex = playIndex % voices.size();
+	}
+
+	public Integer getCurrentPosition(){
+		return voices.get(playIndex).getCurrentPosition();
 	}
 
 	public boolean pause()
@@ -99,4 +117,16 @@ public class NativeAudioAsset
 			voice.setVolume(volume);
 		}
 	}
+
+	public void seekTo(int position){
+		for (int x = 0; x < voices.size(); x++)
+		{
+			NativeAudioAssetComplex voice = voices.get(x);
+			voice.seekTo(position);
+		}
+	}
+
+	public Integer getDuration(){
+        return voices.get(playIndex).getDuration();
+    }
 }

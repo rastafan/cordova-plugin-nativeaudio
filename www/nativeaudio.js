@@ -59,5 +59,21 @@ module.exports  = {
 
     setVolumeForComplexAsset: function (id, volume, successCallback, errorCallback) {
         return cordova.exec(successCallback, errorCallback, "NativeAudio", "setVolumeForComplexAsset", [id, parseFloat(volume)]);
+    },
+
+    getCurrentPosition: function (id, successCallback, errorCallback){
+        return cordova.exec(successCallback, errorCallback, "NativeAudio", "getCurrentPosition", [id])
+    },
+
+    pause: function (id, successCallback, errorCallback){
+        return cordova.exec(successCallback, errorCallback, "NativeAudio", "pause", [id])
+    },
+
+    getDuration: function (id, successCallback, errorCallback){
+        return cordova.exec(successCallback, errorCallback, "NativeAudio", "getDuration", [id])
+    },
+    
+    seekTo: function (id, position, successCallback, errorCallback){
+        return cordova.exec(successCallback, errorCallback, "NativeAudio", "seekTo", [id, position])
     }
 };

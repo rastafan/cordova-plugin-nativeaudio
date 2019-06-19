@@ -1,3 +1,7 @@
+#!!!CAUTION!!!
+
+This fork is still under development and may be modified at any time. It may also change the original purpose of this plugin entirely. Breaking changes may happen at any time.
+
 # Cordova Native Audio Plugin
 
 Cordova / PhoneGap 3.5+ extension for Native Audio playback, aimed at HTML5 gaming and audio applications which require minimum latency, polyphony and concurrency.
