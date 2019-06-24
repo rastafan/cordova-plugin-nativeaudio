@@ -7,13 +7,17 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <AVFoundation/AVAudioPlayer.h>
+#import <AVFoundation/AVPlayer.h>
+#import <AVFoundation/AVPlayerItem.h>
+#import <AVFoundation/AVAsset.h>
+#import <AVFoundation/AVAssetResourceLoader.h>
 
 typedef void (^CompleteCallback)(NSString*);
 
-@interface NativeAudioAsset : NSObject<AVAudioPlayerDelegate> {
-    NSMutableArray* voices;
-    int playIndex;
+@interface NativeAudioAsset : NSObject {
+    //NSMutableArray* voices;
+    //AVPlayer* player;
+    //int playIndex;
     NSString* audioId;
     CompleteCallback finished;
     NSNumber *initialVolume;
@@ -23,12 +27,17 @@ typedef void (^CompleteCallback)(NSString*);
 - (id) initWithPath:(NSString*) path withVoices:(NSNumber*) numVoices withVolume:(NSNumber*) volume withFadeDelay:(NSNumber *)delay;
 - (void) play;
 - (void) playWithFade;
+- (void) pause;
+- (void) pauseWithFade;
 - (void) stop;
 - (void) stopWithFade;
 - (void) loop;
 - (void) unload;
 - (void) setVolume:(NSNumber*) volume;
 - (void) setCallbackAndId:(CompleteCallback)cb audioId:(NSString*)audioId;
-- (void) audioPlayerDidFinishPlaying:(AVAudioPlayer *)player successfully:(BOOL)flag;
-- (void) audioPlayerDecodeErrorDidOccur:(AVAudioPlayer *)player error:(NSError *)error;
+- (void) audioPlayerDidFinishPlaying:(AVPlayer *)player successfully:(BOOL)flag;
+- (void) audioPlayerDecodeErrorDidOccur:(AVPlayer *)player error:(NSError *)error;
+- (NSTimeInterval) getDuration;
+- (NSTimeInterval) getCurrentPosition;
+- (void) seekTo:(NSNumber*) position;
 @end
