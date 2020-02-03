@@ -15,87 +15,67 @@ import android.content.res.AssetFileDescriptor;
 
 public class NativeAudioAsset
 {
-
-	private ArrayList<NativeAudioAssetComplex> voices;
+	NativeAudioAssetComplex track;
 	private int playIndex = 0;
-	
-	public NativeAudioAsset(AssetFileDescriptor afd, int numVoices, float volume) throws IOException
+
+	public NativeAudioAsset(String url, float volume) throws IOException
 	{
-		voices = new ArrayList<NativeAudioAssetComplex>();
-		
-		if ( numVoices < 0 )
-			numVoices = 1;
-		
-		for ( int x=0; x<numVoices; x++) 
-		{
-			NativeAudioAssetComplex voice = new NativeAudioAssetComplex(afd, volume);
-			voices.add( voice );
-		}
+		track = new NativeAudioAssetComplex(url, volume);
+	}
+
+	public NativeAudioAsset(FileDescriptor fd, float volume) throws IOException
+	{
+		track = new NativeAudioAssetComplex(fd, volume);
 	}
 	
 	public void play(Callable<Void> completeCb) throws IOException
 	{
-		NativeAudioAssetComplex voice = voices.get(playIndex);
-		voice.play(completeCb);
-		playIndex++;
-		playIndex = playIndex % voices.size();
+		track.play(completeCb);
+	}
+
+	public Integer getCurrentPosition(){
+		return track.getCurrentPosition();
 	}
 
 	public boolean pause()
 	{
 		boolean wasPlaying = false;
-		for ( int x=0; x<voices.size(); x++)
-		{
-				NativeAudioAssetComplex voice = voices.get(x);
-				wasPlaying |= voice.pause();
-		}
+		wasPlaying |= track.pause();
 		return wasPlaying;
 	}
 
 	public void resume()
 	{
-		// only resumes first instance, assume being used on a stream and not multiple sfx
-		if (voices.size() > 0)
-		{
-				NativeAudioAssetComplex voice = voices.get(0);
-				voice.resume();
-		}
+		track.resume();
 	}
 
     public void stop()
 	{
-		for ( int x=0; x<voices.size(); x++) 
-		{
-			NativeAudioAssetComplex voice = voices.get(x);
-			voice.stop();
-		}
+		track.stop();
 	}
 	
 	public void loop() throws IOException
 	{
-		NativeAudioAssetComplex voice = voices.get(playIndex);
-		voice.loop();
-		playIndex++;
-		playIndex = playIndex % voices.size();
+		track.loop();
 	}
 	
 	public void unload() throws IOException
 	{
 		this.stop();
-		for ( int x=0; x<voices.size(); x++) 
-		{
-			NativeAudioAssetComplex voice = voices.get(x);
-			voice.unload();
-		}
-		voices.removeAll(voices);
+		track.unload();
+		track = null;
 	}
 	
 	public void setVolume(float volume)
 	{
-		for (int x = 0; x < voices.size(); x++)
-		{
-			NativeAudioAssetComplex voice = voices.get(x);
-			voice.setVolume(volume);
-		}
+		track.setVolume(volume);
 	}
+
+	public void seekTo(int position){
+		track.seekTo(position);
+	}
+
+	public Integer getDuration(){
+        return track.getDuration();
+    }
 }

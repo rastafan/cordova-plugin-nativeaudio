@@ -53,7 +53,6 @@ var app = {
             window.plugins.NativeAudio.preloadComplex('noise', 
                                                       'assets/ambient.mp3', 
                                                       1, // volume
-                                                      1, // voices
                                                       0, // delay
             function(msg) {
                 console.info(msg); 
