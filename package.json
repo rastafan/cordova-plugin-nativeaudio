@@ -23,7 +23,8 @@
     "audio",
     "game",
     "mp3",
-    "rjfun"
+    "rjfun",
+    "rastafan"
   ],
   "author": {
     "name": "Andrew Trice"
@@ -35,6 +36,8 @@
     "email": "rjfun.mobile@gmail.com"
   },{
     "name": "Sidney Bofah"
+  },{
+    "name": "Rastafan"
   }],
   "license": "MIT"
 }

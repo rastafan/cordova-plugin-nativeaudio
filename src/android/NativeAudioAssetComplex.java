@@ -5,7 +5,7 @@
 //  Created by Sidney Bofah on 2014-06-26.
 //
 
-package com.rjfun.cordova.plugin.nativeaudio;
+package com.rastafan.cordova.plugin.nativeaudio;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;
