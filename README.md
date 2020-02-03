@@ -1,8 +1,4 @@
-# !!!CAUTION!!!
-
-This fork is still under development and may be modified at any time. It may also change the original purpose of this plugin entirely. Breaking changes may happen at any time.
-
-# Cordova Native Audio Plugin
+#Cordova Native Audio Plugin
 
 Cordova / PhoneGap 3.5+ extension for Native Audio playback, aimed at HTML5 gaming and audio applications which require minimum latency, polyphony and concurrency.
 
@@ -10,27 +6,28 @@ Cordova / PhoneGap 3.5+ extension for Native Audio playback, aimed at HTML5 gami
 
 1. [Description](#description)
 2. [History](#history)
-3. [Roadmap](#roadmap)
+3. [Roadmap](#next-steps)
 5. [Integration](#integration)
 7. [Supported Platforms](#supported-platforms)
 8. [Installation](#installation)
 9. [Usage](#usage)
 10. [API](#api)
 11. [Demo](#demo)
+12. [Example](#example)
 
 ## Description
 
-This Cordova / PhoneGap (3.5+) plugin enables concurrency (multi-channel playback), polyphony (multi-voice playback) and minimized latency (via caching) in audio-based applications, by leveraging native audio APIs. Designed for the use in HTML5-based cross-platform games and mobile/hybrid audio applications.
+This Cordova / PhoneGap (3.5+) plugin enables concurrency (multi-channel playback) and minimized latency (via caching) in audio-based applications, by leveraging native audio APIs. Designed for the use in HTML5-based cross-platform games and mobile/hybrid audio applications.
 
 ## History
 
-Community-driven, clean fork of the Low Latency Audio Plugin for Cordova / PhoneGap, initially published by [Andrew Trice](http://www.tricedesigns.com/2012/01/25/low-latency-polyphonic-audio-in-phonegap/) and then maintained by [Raymond Xie](http://github.com/floatinghotpot/) and [Sidney Bofah](https://github.com/SidneyS/).
+This plugin is a fork of [this plugin](https://github.com/floatinghotpot/cordova-plugin-nativeaudio), which in turn is a community-driven, clean fork of the Low Latency Audio Plugin for Cordova / PhoneGap, initially published by [Andrew Trice](http://www.tricedesigns.com/2012/01/25/low-latency-polyphonic-audio-in-phonegap/) and then maintained by [Raymond Xie](http://github.com/floatinghotpot/) and [Sidney Bofah](https://github.com/SidneyS/).
 
-This project cleans up a lot of legacy code, and adds success, error and completion callbacks. It also features integration in AngularJS projects via [ngCordova](http://www.ngcordova.com).
+In addition to the clean-up of legacy code and callbacks, this fork uses AVPlayer for iOS, fixes some caveats with the original project, and can reproduce streaming audio from http/https.
 
 ## Roadmap
 
-Following the Cordova philosophy, this is a shim for a web audio implementation (on mobile) which is as fast and feature-rich as native mobile APIs. Currently, neither HTML5 Audio or the more recent Web Audio API offer a cross-platform solution which 1) is fast, 2) supports polyphony, 3) concurrency and 4) maintains a low overhead.
+Following the Cordova philosophy, this is a shim for a web audio implementation (on mobile) which is as fast and feature-rich as native mobile APIs. Currently, neither HTML5 Audio or the more recent Web Audio API offer a cross-platform solution which 1) is fast, 2) supports concurrency and 3) maintains a low overhead.
 
 It should be replaced by a standardised W3C solution as soon as such an implementation offers comparable performance across (mobile) devices, which is crucial for HTML5-based games.
 
@@ -43,8 +40,8 @@ Download it at the ngCordova [website](http://www.ngcordova.com) or the [reposit
 
 ## Supported Platforms
 
-* iOS (tested with 7.1.2, 8.1.3)
-* Android (tested in API levels 14 - 21)
+* iOS (tested with 10, 11, 13)
+* Android (tested in API levels 26 - 27 - 28)
 
 ## Installation
 
@@ -53,7 +50,7 @@ Via Cordova CLI:
 cordova plugin add cordova-plugin-nativeaudio
 ```
 
-## Usage
+##Usage
 
 
 1. Wait for `deviceReady`.
@@ -61,9 +58,9 @@ cordova plugin add cordova-plugin-nativeaudio
 2. `play()` the audio asset via its id.
 3. `unload()` the audio asset via its id.
 
-## API
+##API
 
-### Preloading
+###Preloading
 
 ```javascript
 preloadSimple: function ( id, assetPath, successCallback, errorCallback)
@@ -82,22 +79,21 @@ Fully concurrent and multichannel.
 
 
 ```javascript
-preloadComplex: function ( id, assetPath, volume, voices, delay, successCallback, errorCallback)
+preloadComplex: function ( id, assetPath, volume, delay, successCallback, errorCallback)
 ```
 
 Loads an audio file into memory. Optimized for background music / ambient sound.
 Uses highlevel native APIs with a larger footprint. (iOS: AVAudioPlayer).
-Can be stopped / looped and used with multiple voices. Can be faded in and out using the delay parameter.
+Can be stopped / looped. Can be faded in and out using the delay parameter.
 
 
-#### Volume & Voices
+####Volume & Voices
 
 The default **volume** is 1.0, a lower default can be set by using a numerical value from 0.1 to 1.0.
 
-By default, there is 1 **vice**, that is: one instance that will be stopped & restarted on play().
-If there are multiple voices (number greater than 0), it will cycle through voices to play overlapping audio.
-
 Change the float-based **delay** parameter to increase the fade-in/fade-out timing.
+
+**SUPPORT FOR VOICES HAS BEEN REMOVED IN THIS PLUGIN**
 
 ### Playback
 
@@ -105,7 +101,6 @@ Change the float-based **delay** parameter to increase the fade-in/fade-out timi
  * id - string unique ID for the audio file
  * assetPath - the relative path to the audio asset within the www directory
  * volume - the volume of the preloaded sound (0.1 to 1.0)
- * voices - the number of multichannel voices available
  * successCallback - success callback function
  * errorCallback - error callback function
 

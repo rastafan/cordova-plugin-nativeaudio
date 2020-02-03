@@ -10,7 +10,7 @@ exports.preloadSimple = function(id, assetPath, success, fail) {
     __res_cache[ id ] = res;
 };
 
-exports.preloadComplex = function(id, assetPath, volume, voices, delay, success, fail) {
+exports.preloadComplex = function(id, assetPath, volume, delay, success, fail) {
     var res = new Audio();
     res.addEventListener('canplaythrough', success, false);
     res.onerror = fail;

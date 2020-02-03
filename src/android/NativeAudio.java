@@ -5,7 +5,7 @@
 //  Created by Sidney Bofah on 2014-06-26.
 //
 
-package com.rjfun.cordova.plugin.nativeaudio;
+package com.rastafan.cordova.plugin.nativeaudio;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -83,21 +83,10 @@ public class NativeAudio extends CordovaPlugin implements AudioManager.OnAudioFo
 					volume = data.getDouble(2);
 				}
 
-				int voices;
-				if (data.length() <= 3) {
-					voices = 1;
-				} else {
-					voices = data.getInt(3);
-				}
-
-				//String fullPath = "www/".concat(assetPath);
-
-				//Context ctx = cordova.getActivity().getApplicationContext();
-
 				NativeAudioAsset asset;
 
 				if(assetPath.indexOf("http") == 0){
-					asset = new NativeAudioAsset(assetPath, voices, (float)volume);
+					asset = new NativeAudioAsset(assetPath, (float)volume);
 				}else {
 					File f = new File(assetPath);
 					FileInputStream fis = new FileInputStream(f);
@@ -105,7 +94,7 @@ public class NativeAudio extends CordovaPlugin implements AudioManager.OnAudioFo
 					FileDescriptor fd = fis.getFD();
 
 					asset = new NativeAudioAsset(
-							fd, voices, (float) volume);
+							fd, (float) volume);
 
 				}
 				assetMap.put(audioID, asset);

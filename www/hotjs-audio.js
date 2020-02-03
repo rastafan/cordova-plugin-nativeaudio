@@ -19,7 +19,7 @@ var hotjs = hotjs || {};
             this.res_cache[ id ] = res;
         },
 
-        preloadComplex: function(id, assetPath, volume, voices, delay, success, fail) {
+        preloadComplex: function(id, assetPath, volume, delay, success, fail) {
             var res = new Audio();
             res.addEventListener('canplaythrough', success, false);
             res.onerror = fail;

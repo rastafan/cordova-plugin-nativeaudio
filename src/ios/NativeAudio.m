@@ -147,16 +147,6 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
         volume = [NSNumber numberWithFloat:1.0f];
     }
     
-    NSNumber *voices = nil;
-    if ( [arguments count] > 3 ) {
-        voices = [arguments objectAtIndex:3];
-        if([voices isEqual:nil]) {
-            voices = [NSNumber numberWithInt:1];
-        }
-    } else {
-        voices = [NSNumber numberWithInt:1];
-    }
-    
     NSNumber *delay = nil;
     if ( [arguments count] > 4 && [arguments objectAtIndex:4] != [NSNull null])
     {
@@ -173,13 +163,10 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
     
     [self.commandDelegate runInBackground:^{
         if (existingReference == nil) {
-            // NSString* basePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"www"];
-            // NSString* path = [NSString stringWithFormat:@"%@/%@", basePath, assetPath];
             
-            //If path starts with "http" we do not check for file existence on FS, since it is a stream loaded from the network
+            //If path starts with "http" we do not check for file existence on FS, since it is a stream loaded from the network.
             if ([assetPath hasPrefix:@"http"] || [[NSFileManager defaultManager] fileExistsAtPath : assetPath]) {
                 NativeAudioAsset* asset = [[NativeAudioAsset alloc] initWithPath:assetPath
-                                                                      withVoices:voices
                                                                       withVolume:volume
                                                                    withFadeDelay:delay];
                 

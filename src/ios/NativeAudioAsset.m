@@ -20,7 +20,7 @@
 static const CGFloat FADE_STEP = 0.05;
 static const CGFloat FADE_DELAY = 0.08;
 
--(id) initWithPath:(NSString*) path withVoices:(NSNumber*) numVoices withVolume:(NSNumber*) volume withFadeDelay:(NSNumber *)delay
+-(id) initWithPath:(NSString*) path withVolume:(NSNumber*) volume withFadeDelay:(NSNumber *)delay
 {
     setenv("CFNETWORK_DIAGNOSTICS","3",1);
     self = [super init];
@@ -34,27 +34,24 @@ static const CGFloat FADE_DELAY = 0.08;
             pathURL = [NSURL fileURLWithPath: path];
         }
 
-        
-        for (int x = 0; x < [numVoices intValue]; x++) {
-            
-            AVURLAsset *asset = [AVURLAsset URLAssetWithURL:pathURL options:nil];
-            [asset.resourceLoader setDelegate:self queue:dispatch_get_main_queue()];
-            AVPlayerItem * playerItem = [AVPlayerItem playerItemWithAsset:asset automaticallyLoadedAssetKeys:@[@"playable",@"duration"]];
-            self.player = [[AVPlayer alloc] initWithPlayerItem:playerItem];
+        AVURLAsset *asset = [AVURLAsset URLAssetWithURL:pathURL options:nil];
+        [asset.resourceLoader setDelegate:self queue:dispatch_get_main_queue()];
+        AVPlayerItem * playerItem = [AVPlayerItem playerItemWithAsset:asset automaticallyLoadedAssetKeys:@[@"playable",@"duration"]];
+        self.player = [[AVPlayer alloc] initWithPlayerItem:playerItem];
 
-            [self.player addObserver:self forKeyPath:@"status" options:NSKeyValueObservingOptionNew context:NULL];
-            self.player.volume = volume.floatValue;
+        [self.player addObserver:self forKeyPath:@"status" options:NSKeyValueObservingOptionNew context:NULL];
+        self.player.volume = volume.floatValue;
 
-            if(delay)
-            {
-                fadeDelay = delay;
-            }
-            else {
-                fadeDelay = [NSNumber numberWithFloat:FADE_DELAY];
-            }
-            
-            initialVolume = volume;
+        if(delay)
+        {
+            fadeDelay = delay;
         }
+        else {
+            fadeDelay = [NSNumber numberWithFloat:FADE_DELAY];
+        }
+        
+        initialVolume = volume;
+    
         
     }
     return(self);
