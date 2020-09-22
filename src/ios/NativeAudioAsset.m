@@ -20,7 +20,7 @@
 static const CGFloat FADE_STEP = 0.05;
 static const CGFloat FADE_DELAY = 0.08;
 
--(id) initWithPath:(NSString*) path withVolume:(NSNumber*) volume withFadeDelay:(NSNumber *)delay
+-(id) initWithPath:(NSString*) path withVolume:(NSNumber*) volume withFadeDelay:(NSNumber *)delay withTrackName:(NSString *)name
 {
     setenv("CFNETWORK_DIAGNOSTICS","3",1);
     self = [super init];
@@ -51,6 +51,13 @@ static const CGFloat FADE_DELAY = 0.08;
         }
         
         initialVolume = volume;
+
+        if(name)
+        {
+            trackName = name;
+        } else {
+            trackName = '';
+        }
     
         
     }
@@ -260,6 +267,11 @@ static const CGFloat FADE_DELAY = 0.08;
 - (void) seekTo:(NSNumber*)position;
 {
     [self.player seekToTime:CMTimeMake(position.intValue, 1000)];
+}
+
+- (NSString) getTrackName;
+{
+    return self.trackName;
 }
 
 @end
