@@ -29,6 +29,8 @@
 - (void)stop:(CDVInvokedUrlCommand *)command;
 - (MPRemoteCommandHandlerStatus)pause:(CDVInvokedUrlCommand *)command;
 - (MPRemoteCommandHandlerStatus)loop:(CDVInvokedUrlCommand *)command;
+- (MPRemoteCommandHandlerStatus) skipForward:(NativeAudioAsset *) _asset;
+- (MPRemoteCommandHandlerStatus) skipBackward:(NativeAudioAsset *) _asset;
 - (void)unload:(CDVInvokedUrlCommand *)command;
 - (void)setVolumeForComplexAsset:(CDVInvokedUrlCommand *)command;
 - (void)addCompleteListener:(CDVInvokedUrlCommand *)command;

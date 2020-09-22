@@ -228,17 +228,19 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                     [[remoteCommandCenter pauseCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
                         return [self pause:command];
                     }];
-                    [[remoteCommandCenter skipForwardCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
-                        [_asset skipForward];
-                        return MPRemoteCommandHandlerStatusSuccess;
-                    }];
-                    [[remoteCommandCenter skipBackwardCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
-                        [_asset skipBackward];
-                        return MPRemoteCommandHandlerStatusSuccess;
-                    }];
                     
                     NSString *trackName = [_asset getTrackName];
                     if(trackName){
+                        [[remoteCommandCenter skipForwardCommand] setEnabled:YES];
+                        [[remoteCommandCenter skipForwardCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+                            return [self skipForward:_asset];
+                        }];
+                        [[remoteCommandCenter skipBackwardCommand] setEnabled:YES];
+                        [[remoteCommandCenter skipBackwardCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+                            return [self skipBackward:_asset];
+                        }];
+                        
+
                         NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
                         
                         [playInfo setObject:[NSString stringWithFormat:@"%@", [_asset getTrackName] ] forKey:MPMediaItemPropertyTitle];
@@ -302,6 +304,10 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                     
                     [playInfo setValue:[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleDisplayName"] forKey:MPMediaItemPropertyTitle];
                     
+                    [playInfo setObject:[NSNumber numberWithDouble:0] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
+                    [playInfo setObject:[NSNumber numberWithDouble:0]  forKey:MPMediaItemPropertyPlaybackDuration];
+                    [playInfo setObject:[NSNumber numberWithInt:0] forKey:MPNowPlayingInfoPropertyPlaybackRate];
+                    
                     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
                 }
                 
@@ -343,6 +349,14 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                     [_asset pauseWithFade];
                 } else {
                     [_asset pause];
+                }
+                
+                if([_asset getTrackName]){
+                    NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
+                                        
+                    [playInfo setObject:[NSNumber numberWithInt:0] forKey:MPNowPlayingInfoPropertyPlaybackRate];
+                    
+                    [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
                 }
                 
                 NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", INFO_PLAYBACK_STOP, audioID];
@@ -393,13 +407,34 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                 
                 MPRemoteCommandCenter *remoteCommandCenter = [MPRemoteCommandCenter sharedCommandCenter];
                 //[[remoteCommandCenter skipForwardCommand] addTarget:self action:@selector(skipForwar)];
-                //[[remoteCommandCenter togglePlayPauseCommand] addTarget:self action:@selector(togglePlayPause)];
                 [[remoteCommandCenter playCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
                     return [self loop:command];
                 }];
                 [[remoteCommandCenter pauseCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
                     return [self pause:command];
                 }];
+                
+                NSString *trackName = [_asset getTrackName];
+                if(trackName){
+                    [[remoteCommandCenter skipForwardCommand] setEnabled:YES];
+                    [[remoteCommandCenter skipForwardCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+                        return [self skipForward:_asset];
+                    }];
+                    [[remoteCommandCenter skipBackwardCommand] setEnabled:YES];
+                    [[remoteCommandCenter skipBackwardCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+                        return [self skipBackward:_asset];
+                    }];
+                    
+
+                    NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
+                    
+                    [playInfo setObject:[NSString stringWithFormat:@"%@", [_asset getTrackName] ] forKey:MPMediaItemPropertyTitle];
+                    [playInfo setObject:[NSNumber numberWithDouble:[_asset getCurrentPosition]/1000] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
+                    [playInfo setObject:[NSNumber numberWithDouble:[_asset getDuration]/1000]  forKey:MPMediaItemPropertyPlaybackDuration];
+                    [playInfo setObject:[NSNumber numberWithInt:1] forKey:MPNowPlayingInfoPropertyPlaybackRate];
+                    
+                    [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
+                }
                 
                 NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", INFO_PLAYBACK_LOOP, audioID];
                 [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: RESULT] callbackId:callbackId];
@@ -427,6 +462,31 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
     }
 }
 
+-(MPRemoteCommandHandlerStatus) skipForward:(NativeAudioAsset *) _asset
+{
+    [_asset skipForward];
+    
+    NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
+    
+    [playInfo setObject:[NSNumber numberWithDouble:[_asset getCurrentPosition]/1000] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
+    
+    [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
+    
+    return MPRemoteCommandHandlerStatusSuccess;
+}
+
+-(MPRemoteCommandHandlerStatus) skipBackward:(NativeAudioAsset *) _asset
+{
+    [_asset skipBackward];
+    
+    NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
+    
+    [playInfo setObject:[NSNumber numberWithDouble:[_asset getCurrentPosition]/1000] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
+    
+    [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
+    
+    return MPRemoteCommandHandlerStatusSuccess;
+}
 
 - (void) unload:(CDVInvokedUrlCommand *)command
 {
@@ -546,16 +606,16 @@ static void (mySystemSoundCompletionProc)(SystemSoundID ssID,void* clientData)
     NSString *audioID = [arguments objectAtIndex:0];
     
     [self.commandDelegate runInBackground:^{
-        if (audioMapping) {
+        if (self->audioMapping) {
             
-            NSObject* asset = audioMapping[audioID];
+            NSObject* asset = self->audioMapping[audioID];
             
             if (asset != nil){
                 
-                if(completeCallbacks == nil) {
-                    completeCallbacks = [NSMutableDictionary dictionary];
+                if(self->completeCallbacks == nil) {
+                    self->completeCallbacks = [NSMutableDictionary dictionary];
                 }
-                completeCallbacks[audioID] = command.callbackId;
+                self->completeCallbacks[audioID] = command.callbackId;
                 
                 if ([asset isKindOfClass:[NativeAudioAsset class]]) {
                     NativeAudioAsset *_asset = (NativeAudioAsset*) asset;
@@ -600,6 +660,14 @@ static void (mySystemSoundCompletionProc)(SystemSoundID ssID,void* clientData)
             if ([asset isKindOfClass:[NativeAudioAsset class]]) {
                 NativeAudioAsset *_asset = (NativeAudioAsset*) asset;
                 NSTimeInterval duration = [_asset getDuration];
+                
+                if([_asset getTrackName]){
+                    NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
+
+                    [playInfo setObject:[NSNumber numberWithDouble:duration/1000]  forKey:MPMediaItemPropertyPlaybackDuration];
+                    
+                    [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
+                }
                 
                 CDVPluginResult * pluginResult =[CDVPluginResult resultWithStatus : CDVCommandStatus_OK messageAsDouble: duration];
                 [self.commandDelegate sendPluginResult : pluginResult callbackId : callbackId];
@@ -681,6 +749,14 @@ static void (mySystemSoundCompletionProc)(SystemSoundID ssID,void* clientData)
             if ([asset isKindOfClass:[NativeAudioAsset class]]) {
                 NativeAudioAsset *_asset = (NativeAudioAsset*) asset;
                 [_asset seekTo:position];
+                
+                if([_asset getTrackName]){
+                    NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
+                    
+                    [playInfo setObject:@([position intValue] / 1000) forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
+
+                    [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
+                }
                 
                 NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", INFO_SEEK_DONE, audioID];
                 [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: RESULT] callbackId:callbackId];
