@@ -19,9 +19,10 @@ typedef void (^CompleteCallback)(NSString*);
     CompleteCallback finished;
     NSNumber *initialVolume;
     NSNumber *fadeDelay;
+    NSString *trackName;
 }
 
-- (id) initWithPath:(NSString*) path withVolume:(NSNumber*) volume withFadeDelay:(NSNumber *)delay;
+- (id) initWithPath:(NSString*) path withVolume:(NSNumber*) volume withFadeDelay:(NSNumber *)delay withTrackName:(NSString *)name;
 - (void) play;
 - (void) playWithFade;
 - (void) pause;
@@ -37,4 +38,5 @@ typedef void (^CompleteCallback)(NSString*);
 - (NSTimeInterval) getDuration;
 - (NSTimeInterval) getCurrentPosition;
 - (void) seekTo:(NSNumber*) position;
+- (NSString*) getTrackName;
 @end

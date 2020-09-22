@@ -1,15 +1,14 @@
-//
-//
-//  NativeAudio.m
-//  NativeAudio
-//
-//  Created by Sidney Bofah on 2014-06-26.
-//
-
 #import "NativeAudio.h"
 #import <AVFoundation/AVAudioSession.h>
+#import <MediaPlayer/MPRemoteCommandCenter.h>
+#import <MediaPlayer/MPRemoteCommand.h>
+#import <MediaPlayer/MPMediaItem.h>
+#import <MediaPlayer/MPNowPlayingSession.h>
+#import <MediaPlayer/MPNowPlayingInfoCenter.h>
+
 
 @implementation NativeAudio
+
 
 NSString* ERROR_ASSETPATH_INCORRECT = @"(NATIVE AUDIO) Asset not found.";
 NSString* ERROR_REFERENCE_EXISTS = @"(NATIVE AUDIO) Asset reference already exists.";
@@ -28,7 +27,9 @@ NSString* INFO_SEEK_DONE = @"(NATIVE AUDIO) Seek done.";
 
 NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
 
+
 - (void)pluginInitialize
+
 {
     self.fadeMusic = NO;
     
@@ -38,19 +39,20 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
     AVAudioSession *session = [AVAudioSession sharedInstance];
     // we activate the audio session after the options to mix with others is set
     [session setActive: NO error: nil];
-    NSError *setCategoryError = nil;
+    // NSError *setCategoryError = nil;
     
     // Allows the application to mix its audio with audio from other apps.
-    if (![session setCategory:AVAudioSessionCategoryAmbient
-                  withOptions:AVAudioSessionCategoryOptionMixWithOthers
-                        error:&setCategoryError]) {
+    if (![session setCategory:AVAudioSessionCategoryPlayback error:nil]) {
+        /*if (![session setCategory:AVAudioSessionCategoryAmbient
+         withOptions:AVAudioSessionCategoryOptionMixWithOthers
+         error:&setCategoryError]) {*/
         
         NSLog (@"Error setting audio session category.");
         return;
     }
     
     [session setActive: YES error: nil];
-    [session setCategory:AVAudioSessionCategoryPlayback error:nil];
+    
 }
 
 - (void) parseOptions:(NSDictionary*) options
@@ -100,7 +102,7 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                 CFURLRef soundFileURLRef = (CFURLRef) CFBridgingRetain(pathURL);
                 SystemSoundID soundID;
                 AudioServicesCreateSystemSoundID(soundFileURLRef, & soundID);
-                audioMapping[audioID] = [NSNumber numberWithInt:soundID];
+                self->audioMapping[audioID] = [NSNumber numberWithInt:soundID];
                 
                 NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", INFO_ASSET_LOADED, audioID];
                 [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: RESULT] callbackId:callbackId];
@@ -110,7 +112,7 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                 CFURLRef        soundFileURLRef = (CFURLRef) CFBridgingRetain(pathURL);
                 SystemSoundID soundID;
                 AudioServicesCreateSystemSoundID(soundFileURLRef, & soundID);
-                audioMapping[audioID] = [NSNumber numberWithInt:soundID];
+                self->audioMapping[audioID] = [NSNumber numberWithInt:soundID];
                 
                 NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", INFO_ASSET_LOADED, audioID];
                 [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: RESULT] callbackId:callbackId];
@@ -148,11 +150,18 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
     }
     
     NSNumber *delay = nil;
-    if ( [arguments count] > 4 && [arguments objectAtIndex:4] != [NSNull null])
+    if ( [arguments count] > 3 && [arguments objectAtIndex:3] != [NSNull null])
     {
         // The delay is determines how fast the asset is
         // faded in and out
-        delay = [arguments objectAtIndex:4];
+        delay = [arguments objectAtIndex:3];
+    }
+    
+    NSString *trackName = nil;
+    if ( [arguments count] > 4 && [arguments objectAtIndex:4] != [NSNull null])
+    {
+        // The trackName is the name shown in the RemoteCommandCenter
+        trackName = [arguments objectAtIndex:4];
     }
     
     if(audioMapping == nil) {
@@ -168,7 +177,8 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
             if ([assetPath hasPrefix:@"http"] || [[NSFileManager defaultManager] fileExistsAtPath : assetPath]) {
                 NativeAudioAsset* asset = [[NativeAudioAsset alloc] initWithPath:assetPath
                                                                       withVolume:volume
-                                                                   withFadeDelay:delay];
+                                                                   withFadeDelay:delay
+                                                                   withTrackName:trackName];
                 
                 self->audioMapping[audioID] = asset;
                 
@@ -188,7 +198,7 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
     }];
 }
 
-- (void) play:(CDVInvokedUrlCommand *)command
+- (MPRemoteCommandHandlerStatus) play:(CDVInvokedUrlCommand *)command
 {
     NSString *callbackId = command.callbackId;
     NSArray* arguments = command.arguments;
@@ -209,6 +219,25 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                     } else {
                         [_asset play];
                     }
+                    
+                    MPRemoteCommandCenter *remoteCommandCenter = [MPRemoteCommandCenter sharedCommandCenter];
+                    //[[remoteCommandCenter skipForwardCommand] addTarget:self action:@selector(skipForwar)];
+                    [[remoteCommandCenter playCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+                        return [self play:command];
+                    }];
+                    [[remoteCommandCenter pauseCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+                        return [self pause:command];
+                    }];
+                    
+                    NSString *trackName = [_asset getTrackName];
+                    if(trackName){
+                        NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
+                        
+                        [playInfo setObject:[NSString stringWithFormat:@"%@", [_asset getTrackName] ] forKey:MPMediaItemPropertyTitle];
+                        
+                        [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
+                    }
+                    
                     
                     NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", INFO_PLAYBACK_PLAY, audioID];
                     [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: RESULT] callbackId:callbackId];
@@ -233,6 +262,8 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
             [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];
         }
     }];
+    
+    return MPRemoteCommandHandlerStatusSuccess;
 }
 
 - (void) stop:(CDVInvokedUrlCommand *)command
@@ -275,7 +306,7 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
         [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];    }
 }
 
-- (void) pause:(CDVInvokedUrlCommand *)command
+- (MPRemoteCommandHandlerStatus) pause:(CDVInvokedUrlCommand *)command
 {
     NSString *callbackId = command.callbackId;
     NSArray* arguments = command.arguments;
@@ -310,12 +341,20 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
             NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", ERROR_REFERENCE_MISSING, audioID];
             [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];
         }
+        
+        return MPRemoteCommandHandlerStatusSuccess;
     } else {
         NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", ERROR_REFERENCE_MISSING, audioID];
-        [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];    }
+        [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];
+        
+        return MPRemoteCommandHandlerStatusCommandFailed;
+        
+    }
 }
 
-- (void) loop:(CDVInvokedUrlCommand *)command
+
+
+- (MPRemoteCommandHandlerStatus) loop:(CDVInvokedUrlCommand *)command
 {
     
     NSString *callbackId = command.callbackId;
@@ -332,6 +371,17 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
             if ([asset isKindOfClass:[NativeAudioAsset class]]) {
                 NativeAudioAsset *_asset = (NativeAudioAsset*) asset;
                 [_asset loop];
+                
+                MPRemoteCommandCenter *remoteCommandCenter = [MPRemoteCommandCenter sharedCommandCenter];
+                //[[remoteCommandCenter skipForwardCommand] addTarget:self action:@selector(skipForwar)];
+                //[[remoteCommandCenter togglePlayPauseCommand] addTarget:self action:@selector(togglePlayPause)];
+                [[remoteCommandCenter playCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+                    return [self loop:command];
+                }];
+                [[remoteCommandCenter pauseCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+                    return [self pause:command];
+                }];
+                
                 NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", INFO_PLAYBACK_LOOP, audioID];
                 [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: RESULT] callbackId:callbackId];
                 
@@ -345,12 +395,19 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                 NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", ERROR_REFERENCE_MISSING, audioID];
                 [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];
             }
+            
+            return MPRemoteCommandHandlerStatusSuccess;
         } else {
             NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", ERROR_REFERENCE_MISSING, audioID];
             [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];
+            
+            return MPRemoteCommandHandlerStatusCommandFailed;
         };
+    } else {
+        return MPRemoteCommandHandlerStatusCommandFailed;
     }
 }
+
 
 - (void) unload:(CDVInvokedUrlCommand *)command
 {
@@ -527,7 +584,7 @@ static void (mySystemSoundCompletionProc)(SystemSoundID ssID,void* clientData)
                 
                 CDVPluginResult * pluginResult =[CDVPluginResult resultWithStatus : CDVCommandStatus_OK messageAsDouble: duration];
                 [self.commandDelegate sendPluginResult : pluginResult callbackId : callbackId];
-
+                
             }else{
                 NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", ERROR_TYPE_RESTRICTED, audioID];
                 [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];

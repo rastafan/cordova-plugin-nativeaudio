@@ -20,7 +20,7 @@
 static const CGFloat FADE_STEP = 0.05;
 static const CGFloat FADE_DELAY = 0.08;
 
--(id) initWithPath:(NSString*) path withVolume:(NSNumber*) volume withFadeDelay:(NSNumber *)delay
+-(id) initWithPath:(NSString*) path withVolume:(NSNumber*) volume withFadeDelay:(NSNumber *)delay withTrackName:(NSString *)name
 {
     setenv("CFNETWORK_DIAGNOSTICS","3",1);
     self = [super init];
@@ -33,15 +33,15 @@ static const CGFloat FADE_DELAY = 0.08;
         }else{
             pathURL = [NSURL fileURLWithPath: path];
         }
-
+        
         AVURLAsset *asset = [AVURLAsset URLAssetWithURL:pathURL options:nil];
         [asset.resourceLoader setDelegate:self queue:dispatch_get_main_queue()];
         AVPlayerItem * playerItem = [AVPlayerItem playerItemWithAsset:asset automaticallyLoadedAssetKeys:@[@"playable",@"duration"]];
         self.player = [[AVPlayer alloc] initWithPlayerItem:playerItem];
-
+        
         [self.player addObserver:self forKeyPath:@"status" options:NSKeyValueObservingOptionNew context:NULL];
         self.player.volume = volume.floatValue;
-
+        
         if(delay)
         {
             fadeDelay = delay;
@@ -51,7 +51,14 @@ static const CGFloat FADE_DELAY = 0.08;
         }
         
         initialVolume = volume;
-    
+        
+        if(name)
+        {
+            trackName = name;
+        } else {
+            trackName = nil;
+        }
+        
         
     }
     return(self);
@@ -105,7 +112,7 @@ static const CGFloat FADE_DELAY = 0.08;
         self.player.volume = 0;
         [self.player play];
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self performSelector:@selector(playWithFade) withObject:nil afterDelay:fadeDelay.floatValue];
+            [self performSelector:@selector(playWithFade) withObject:nil afterDelay:self->fadeDelay.floatValue];
         });
     }
     else
@@ -114,7 +121,7 @@ static const CGFloat FADE_DELAY = 0.08;
         {
             self.player.volume += FADE_STEP;
             dispatch_async(dispatch_get_main_queue(), ^{
-                [self performSelector:@selector(playWithFade) withObject:nil afterDelay:fadeDelay.floatValue];
+                [self performSelector:@selector(playWithFade) withObject:nil afterDelay:self->fadeDelay.floatValue];
             });
         }
     }
@@ -182,7 +189,7 @@ static const CGFloat FADE_DELAY = 0.08;
 - (void) loop
 {
     [self stop];
-
+    
     [self.player seekToTime:CMTimeMake(0, 1)];
     
     self.player.actionAtItemEnd = AVPlayerActionAtItemEndNone;
@@ -260,6 +267,11 @@ static const CGFloat FADE_DELAY = 0.08;
 - (void) seekTo:(NSNumber*)position;
 {
     [self.player seekToTime:CMTimeMake(position.intValue, 1000)];
+}
+
+- (NSString*) getTrackName;
+{
+    return self->trackName;
 }
 
 @end
