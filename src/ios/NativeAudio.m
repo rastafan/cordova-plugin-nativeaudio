@@ -231,11 +231,17 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                     
                     NSString *trackName = [_asset getTrackName];
                     if(trackName){
+                        
+                        [[remoteCommandCenter seekForwardCommand] setEnabled:NO];
+                        [[remoteCommandCenter seekBackwardCommand] setEnabled:NO];
+                        
                         [[remoteCommandCenter skipForwardCommand] setEnabled:YES];
+                        [[remoteCommandCenter skipBackwardCommand] setEnabled:YES];
+                        
                         [[remoteCommandCenter skipForwardCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
                             return [self skipForward:_asset];
                         }];
-                        [[remoteCommandCenter skipBackwardCommand] setEnabled:YES];
+                        
                         [[remoteCommandCenter skipBackwardCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
                             return [self skipBackward:_asset];
                         }];
@@ -416,11 +422,16 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                 
                 NSString *trackName = [_asset getTrackName];
                 if(trackName){
+                    [[remoteCommandCenter seekForwardCommand] setEnabled:NO];
+                    [[remoteCommandCenter seekBackwardCommand] setEnabled:NO];
+                    
                     [[remoteCommandCenter skipForwardCommand] setEnabled:YES];
+                    [[remoteCommandCenter skipBackwardCommand] setEnabled:YES];
+                    
                     [[remoteCommandCenter skipForwardCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
                         return [self skipForward:_asset];
                     }];
-                    [[remoteCommandCenter skipBackwardCommand] setEnabled:YES];
+                    
                     [[remoteCommandCenter skipBackwardCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
                         return [self skipBackward:_asset];
                     }];
