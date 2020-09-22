@@ -39,4 +39,6 @@ typedef void (^CompleteCallback)(NSString*);
 - (NSTimeInterval) getCurrentPosition;
 - (void) seekTo:(NSNumber*) position;
 - (NSString*) getTrackName;
+- (void) skipForward;
+- (void) skipBackward;
 @end

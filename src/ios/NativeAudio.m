@@ -228,12 +228,23 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                     [[remoteCommandCenter pauseCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
                         return [self pause:command];
                     }];
+                    [[remoteCommandCenter skipForwardCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+                        [_asset skipForward];
+                        return MPRemoteCommandHandlerStatusSuccess;
+                    }];
+                    [[remoteCommandCenter skipBackwardCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+                        [_asset skipBackward];
+                        return MPRemoteCommandHandlerStatusSuccess;
+                    }];
                     
                     NSString *trackName = [_asset getTrackName];
                     if(trackName){
                         NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
                         
                         [playInfo setObject:[NSString stringWithFormat:@"%@", [_asset getTrackName] ] forKey:MPMediaItemPropertyTitle];
+                        [playInfo setObject:[NSNumber numberWithDouble:[_asset getCurrentPosition]/1000] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
+                        [playInfo setObject:[NSNumber numberWithDouble:[_asset getDuration]/1000]  forKey:MPMediaItemPropertyPlaybackDuration];
+                        [playInfo setObject:[NSNumber numberWithInt:1] forKey:MPNowPlayingInfoPropertyPlaybackRate];
                         
                         [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
                     }
@@ -284,6 +295,14 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                     [_asset stopWithFade];
                 } else {
                     [_asset stop];
+                }
+                
+                if([_asset getTrackName]){
+                    NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
+                    
+                    [playInfo setValue:[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleDisplayName"] forKey:MPMediaItemPropertyTitle];
+                    
+                    [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
                 }
                 
                 NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", INFO_PLAYBACK_STOP, audioID];

@@ -274,6 +274,17 @@ static const CGFloat FADE_DELAY = 0.08;
     return self->trackName;
 }
 
+- (void) skipForward;
+{
+    [self.player seekToTime: CMTimeAdd(self.player.currentTime,CMTimeMakeWithSeconds(10, 1))];
+}
+
+
+- (void) skipBackward;
+{
+    [self.player seekToTime: CMTimeSubtract(self.player.currentTime,CMTimeMakeWithSeconds(10, 1))];
+}
+
 @end
 
 
