@@ -360,6 +360,7 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                 if([_asset getTrackName]){
                     NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
                                         
+                    [playInfo setObject:[NSNumber numberWithDouble:[_asset getCurrentPosition]/1000] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
                     [playInfo setObject:[NSNumber numberWithInt:0] forKey:MPNowPlayingInfoPropertyPlaybackRate];
                     
                     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
@@ -597,11 +598,12 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
     }
 }
 
-- (void) sendPlayPauseCallback:(NSString*)forId {
+- (void) sendPlayPauseCallback:(NSString*)forId withValue:(BOOL) playing {
     NSString* callbackId = self->playPauseCallbacks[forId];
     if (callbackId) {
-        NSDictionary* RESULT = [NSDictionary dictionaryWithObject:forId forKey:@"id"];
-        [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:RESULT] callbackId:callbackId];
+        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:playing];
+        [result setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:result callbackId:callbackId];
     }
 }
 
@@ -685,7 +687,7 @@ static void (mySystemSoundCompletionProc)(SystemSoundID ssID,void* clientData)
                 if ([asset isKindOfClass:[NativeAudioAsset class]]) {
                     NativeAudioAsset *_asset = (NativeAudioAsset*) asset;
                     [_asset setPlayPauseCallbackAndId:^(NSString* audioID, BOOL playing) {
-                        [self sendPlayPauseCallback:audioID];
+                        [self sendPlayPauseCallback:audioID withValue:playing];
                     } audioId:audioID];
                     
                 } else if ( [asset isKindOfClass:[NSNumber class]] ) {
