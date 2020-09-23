@@ -17,6 +17,7 @@
 {
     NSMutableDictionary *audioMapping;
     NSMutableDictionary *completeCallbacks;
+    NSMutableDictionary *playPauseCallbacks;
 }
 
 #define OPT_FADE_MUSIC @"fadeMusic"
@@ -34,6 +35,7 @@
 - (void)unload:(CDVInvokedUrlCommand *)command;
 - (void)setVolumeForComplexAsset:(CDVInvokedUrlCommand *)command;
 - (void)addCompleteListener:(CDVInvokedUrlCommand *)command;
+- (void)addPlayPauseCallbackListener:(CDVInvokedUrlCommand *)command;
 - (void)getDuration:(CDVInvokedUrlCommand *)command;
 - (void)getCurrentPosition:(CDVInvokedUrlCommand *)command;
 - (void)seekTo:(CDVInvokedUrlCommand *)command;

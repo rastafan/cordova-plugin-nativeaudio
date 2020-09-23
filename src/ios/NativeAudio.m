@@ -597,6 +597,14 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
     }
 }
 
+- (void) sendPlayPauseCallback:(NSString*)forId {
+    NSString* callbackId = self->playPauseCallbacks[forId];
+    if (callbackId) {
+        NSDictionary* RESULT = [NSDictionary dictionaryWithObject:forId forKey:@"id"];
+        [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:RESULT] callbackId:callbackId];
+    }
+}
+
 static void (mySystemSoundCompletionProc)(SystemSoundID ssID,void* clientData)
 {
     NativeAudio* nativeAudio = (__bridge NativeAudio*)(clientData);
@@ -641,6 +649,48 @@ static void (mySystemSoundCompletionProc)(SystemSoundID ssID,void* clientData)
                                                           NULL,
                                                           mySystemSoundCompletionProc,
                                                           (__bridge void *)(self));
+                }
+            } else {
+                
+                NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", ERROR_REFERENCE_MISSING, audioID];
+                [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];
+            }
+            
+        } else {
+            
+            NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", ERROR_REFERENCE_MISSING, audioID];
+            [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];
+        }
+    }];
+}
+
+- (void) addPlayPauseCallbackListener:(CDVInvokedUrlCommand *)command
+{
+    NSString *callbackId = command.callbackId;
+    NSArray* arguments = command.arguments;
+    NSString *audioID = [arguments objectAtIndex:0];
+    
+    [self.commandDelegate runInBackground:^{
+        if (self->audioMapping) {
+            
+            NSObject* asset = self->audioMapping[audioID];
+            
+            if (asset != nil){
+                
+                if(self->playPauseCallbacks == nil) {
+                    self->playPauseCallbacks = [NSMutableDictionary dictionary];
+                }
+                self->playPauseCallbacks[audioID] = command.callbackId;
+                
+                if ([asset isKindOfClass:[NativeAudioAsset class]]) {
+                    NativeAudioAsset *_asset = (NativeAudioAsset*) asset;
+                    [_asset setPlayPauseCallbackAndId:^(NSString* audioID, BOOL playing) {
+                        [self sendPlayPauseCallback:audioID];
+                    } audioId:audioID];
+                    
+                } else if ( [asset isKindOfClass:[NSNumber class]] ) {
+                    NSString *RESULT = [NSString stringWithFormat:@"Method only available for tracks loaded with PreloadComplex (%@)", audioID];
+                    [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];
                 }
             } else {
                 

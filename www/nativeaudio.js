@@ -33,8 +33,11 @@ module.exports  = {
     },
     
     preloadComplex: function(id, assetPath, volume, delay, track_name, successCallback, errorCallback) {
-
         return cordova.exec(successCallback, errorCallback, "NativeAudio", "preloadComplex", [id, assetPath, parseFloat(volume), parseFloat(delay), track_name]);
+    },
+
+    addPlayPauseCallbackListener: function(id, successCallback, errorCallback) {
+        cordova.exec(successCallback, errorCallback, "NativeAudio", "addPlayPauseCallbackListener", [id]);
     },
 
     play: function(id, successCallback, errorCallback, completeCallback) {

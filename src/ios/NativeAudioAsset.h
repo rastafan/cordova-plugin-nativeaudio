@@ -13,10 +13,12 @@
 #import <AVFoundation/AVAssetResourceLoader.h>
 
 typedef void (^CompleteCallback)(NSString*);
+typedef void (^PlayPauseCallback)(NSString*, BOOL);
 
 @interface NativeAudioAsset : NSObject {
     NSString* audioId;
     CompleteCallback finished;
+    PlayPauseCallback playPauseCallback;
     NSNumber *initialVolume;
     NSNumber *fadeDelay;
     NSString *trackName;
@@ -33,6 +35,7 @@ typedef void (^CompleteCallback)(NSString*);
 - (void) unload;
 - (void) setVolume:(NSNumber*) volume;
 - (void) setCallbackAndId:(CompleteCallback)cb audioId:(NSString*)audioId;
+- (void) setPlayPauseCallbackAndId:(PlayPauseCallback)cb audioId:(NSString*)audioId;
 - (void) audioPlayerDidFinishPlaying:(AVPlayer *)player successfully:(BOOL)flag;
 - (void) audioPlayerDecodeErrorDidOccur:(AVPlayer *)player error:(NSError *)error;
 - (NSTimeInterval) getDuration;

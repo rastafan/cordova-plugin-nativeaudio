@@ -40,6 +40,7 @@ static const CGFloat FADE_DELAY = 0.08;
         self.player = [[AVPlayer alloc] initWithPlayerItem:playerItem];
         
         [self.player addObserver:self forKeyPath:@"status" options:NSKeyValueObservingOptionNew context:NULL];
+        [self.player addObserver:self forKeyPath:@"timeControlStatus" options:NSKeyValueObservingOptionNew context:NULL];
         self.player.volume = volume.floatValue;
         
         if(delay)
@@ -90,6 +91,28 @@ static const CGFloat FADE_DELAY = 0.08;
             
         } else if (self.player.status == AVPlayerItemStatusUnknown) {
             NSLog(@"AVPlayer Unknown");
+            
+        }
+    }
+    
+    if(object == self.player && [keyPath isEqualToString:@"timeControlStatus"]){
+        if (self.player.timeControlStatus == AVPlayerTimeControlStatusPlaying) {
+            NSLog(@"AVPlayerTimeControlStatusPlaying");
+            if(self->playPauseCallback != nil) {
+                self->playPauseCallback(self->audioId, true);
+            }
+            
+        } else if (self.player.timeControlStatus == AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate) {
+            NSLog(@"AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate");
+            if(self->playPauseCallback != nil) {
+                self->playPauseCallback(self->audioId, true);
+            }
+            
+        } else if (self.player.timeControlStatus == AVPlayerTimeControlStatusPaused) {
+            NSLog(@"AVPlayerTimeControlStatusPaused");
+            if(self->playPauseCallback != nil) {
+                self->playPauseCallback(self->audioId, false);
+            }
             
         }
     }
@@ -229,6 +252,13 @@ static const CGFloat FADE_DELAY = 0.08;
 {
     self->audioId = aID;
     self->finished = cb;
+}
+
+- (void) setPlayPauseCallbackAndId:(PlayPauseCallback)cb audioId:(NSString*)aID
+{
+    self->audioId = aID;
+    self->playPauseCallback = cb;
+    
 }
 
 - (void) audioPlayerDidFinishPlaying:(AVPlayer *)player successfully:(BOOL)flag
