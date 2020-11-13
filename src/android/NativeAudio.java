@@ -3,6 +3,7 @@
 //  NativeAudio.java
 //
 //  Created by Sidney Bofah on 2014-06-26.
+//  Edited and re-adapted by a bunch other people (see Readme for details)
 //
 
 package com.rastafan.cordova.plugin.nativeaudio;
