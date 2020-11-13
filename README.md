@@ -25,6 +25,8 @@ This plugin is a fork of [this plugin](https://github.com/floatinghotpot/cordova
 
 In addition to the clean-up of legacy code and callbacks, this fork uses AVPlayer for iOS, fixes some caveats with the original project, and can reproduce streaming audio from http/https.
 
+Also, Media Controls are integrated to control audio flow from outside the app. Media Controls have been integrated using the code of [this plugin by ghenry22 and homerours](https://github.com/ghenry22/cordova-plugin-music-controls2). Thank you!
+
 ## Roadmap
 
 Following the Cordova philosophy, this is a shim for a web audio implementation (on mobile) which is as fast and feature-rich as native mobile APIs. Currently, neither HTML5 Audio or the more recent Web Audio API offer a cross-platform solution which 1) is fast, 2) supports concurrency and 3) maintains a low overhead.
@@ -79,13 +81,57 @@ Fully concurrent and multichannel.
 
 
 ```javascript
-preloadComplex: function ( id, assetPath, volume, delay, successCallback, errorCallback)
+preloadComplex: function(id, assetPath, volume, delay, options, successCallback, errorCallback) 
 ```
 
 Loads an audio file into memory. Optimized for background music / ambient sound.
 Uses highlevel native APIs with a larger footprint. (iOS: AVAudioPlayer).
 Can be stopped / looped. Can be faded in and out using the delay parameter.
 
+The "options" parameter takes a configuration object for mediaControls.
+These options are bound to the audioID used to load the file.
+If you give controls to another track, the options from that track will apply.
+It takes the same parameters as [cordova-plugin-music-controls2 plugin](https://github.com/ghenry22/cordova-plugin-music-controls2):
+
+```javascript
+MusicControls.create({
+	track       : 'Time is Running Out',		// optional, default : ''
+	artist      : 'Muse',						// optional, default : ''
+	album       : 'Absolution',     // optional, default: ''
+ 	cover       : 'albums/absolution.jpg',		// optional, default : nothing
+	// cover can be a local path (use fullpath 'file:///storage/emulated/...', or only 'my_image.jpg' if my_image.jpg is in the www folder of your app)
+	//			 or a remote url ('http://...', 'https://...', 'ftp://...')
+	isPlaying   : true,							// optional, default : true
+	dismissable : true,							// optional, default : false
+
+	// hide previous/next/close buttons:
+	hasPrev   : false,		// show previous button, optional, default: true
+	hasNext   : false,		// show next button, optional, default: true
+	hasClose  : true,		// show close button, optional, default: false
+
+	// iOS only, optional
+	
+	duration : 60, // optional, default: 0
+	elapsed : 10, // optional, default: 0
+  	hasSkipForward : true, //optional, default: false. true value overrides hasNext.
+  	hasSkipBackward : true, //optional, default: false. true value overrides hasPrev.
+  	skipForwardInterval : 15, //optional. default: 0.
+	skipBackwardInterval : 15, //optional. default: 0.
+	hasScrubbing : false, //optional. default to false. Enable scrubbing from control center progress bar 
+
+	// Android only, optional
+	// text displayed in the status bar when the notification (and the ticker) are updated
+	ticker	  : 'Now playing "Time is Running Out"',
+	//All icons default to their built-in android equivalents
+	//The supplied drawable name, e.g. 'media_play', is the name of a drawable found under android/res/drawable* folders
+	playIcon: 'media_play',
+	pauseIcon: 'media_pause',
+	prevIcon: 'media_prev',
+	nextIcon: 'media_next',
+	closeIcon: 'media_close',
+	notificationIcon: 'notification'
+}, onSuccess, onError);
+```
 
 ####Volume & Voices
 
@@ -104,27 +150,98 @@ Change the float-based **delay** parameter to increase the fade-in/fade-out timi
  * successCallback - success callback function
  * errorCallback - error callback function
 
+
 ```javascript
-play: function (id, successCallback, errorCallback, completeCallback)
+addControlsCallback: function(id, successCallback, errorCallback)
 ```
 
+Sets the callback for the Media Controls. Each time an event is fired, it will go through thid callback.
+Again, this piece reflects what is stated in the [cordova-plugin-music-controls2 plugin](https://github.com/ghenry22/cordova-plugin-music-controls2).
+Below are shown some of them, check the plugin code to see all of them, or just console.log the returned value if you need one event in particular.
+
+```javascript
+function events(action) {
+
+  const message = JSON.parse(action).message;
+	switch(message) {
+		case 'music-controls-next':
+			// Do something
+			break;
+		case 'music-controls-previous':
+			// Do something
+			break;
+		case 'music-controls-pause':
+			// Do something
+			break;
+		case 'music-controls-play':
+			// Do something
+			break;
+		case 'music-controls-destroy':
+			// Do something
+			break;
+
+		// External controls (iOS only)
+    	case 'music-controls-toggle-play-pause' :
+			// Do something
+			break;
+    	case 'music-controls-seek-to':
+			const seekToInSeconds = JSON.parse(action).position;
+			MusicControls.updateElapsed({
+				elapsed: seekToInSeconds,
+				isPlaying: true
+			});
+			// Do something
+			break;
+
+		// Headset events (Android only)
+		// All media button events are listed below
+		case 'music-controls-media-button' :
+			// Do something
+			break;
+		case 'music-controls-headset-unplugged':
+			// Do something
+			break;
+		case 'music-controls-headset-plugged':
+			// Do something
+			break;
+		default:
+			break;
+	}
+}
+```
+
+
+
+```javascript
+setControls: function(id, successCallback, errorCallback)
+```
+Sets the controls to the audio file with the specified id. The controls will then manage that track in particular
+
+
+```javascript
+play: function(id, setControls, successCallback, errorCallback, completeCallback)
+```
 Plays an audio asset.
 
 * params:
  * id - string unique ID for the audio file
+ * setControls - boolean, true if the controls should be bound to this track
  * successCallback - success callback function
  * errorCallback - error callback function
  * completeCallback - error callback function
 
+
 ```javascript
-loop: function (id, successCallback, errorCallback)
+loop: function (id, setControls, successCallback, errorCallback)
 ```
 Loops an audio asset infinitely - this only works for assets loaded via preloadComplex.
 
 * params
- * ID - string unique ID for the audio file
+ * id - string unique ID for the audio file
+ * setControls - boolean, true if the controls should be bound to this track
  * successCallback - success callback function
  * errorCallback - error callback function
+
 
 ```javascript
 stop: function (id, successCallback, errorCallback)

@@ -1,3 +1,10 @@
+//
+//
+//  MediaSessionCallback.java
+//
+//  Original code from https://github.com/ghenry22/cordova-plugin-music-controls2
+//
+
 package com.rastafan.cordova.plugin.nativeaudio;
 
 import android.content.Intent;

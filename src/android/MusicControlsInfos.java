@@ -1,3 +1,10 @@
+//
+//
+//  MusicControlsInfos.java
+//
+//  Integrated from https://github.com/ghenry22/cordova-plugin-music-controls2
+//
+
 package com.rastafan.cordova.plugin.nativeaudio;
 
 import org.json.JSONArray;
