@@ -11,6 +11,7 @@ import java.io.FileDescriptor;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
+import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
@@ -19,15 +20,17 @@ import android.media.MediaPlayer.OnSeekCompleteListener;
 
 import android.util.Log;
 
+import org.json.JSONObject;
+
 public class NativeAudioAssetComplex implements OnPreparedListener, OnCompletionListener, OnSeekCompleteListener {
 
-	private static final int INVALID = 0;
-	private static final int PREPARED = 1;
-	private static final int PENDING_PLAY = 2;
-	private static final int PLAYING = 3;
-	private static final int PENDING_LOOP = 4;
-	private static final int LOOPING = 5;
-	private static final int PAUSED = 6;
+	public static final int INVALID = 0;
+	public static final int PREPARED = 1;
+	public static final int PENDING_PLAY = 2;
+	public static final int PLAYING = 3;
+	public static final int PENDING_LOOP = 4;
+	public static final int LOOPING = 5;
+	public static final int PAUSED = 6;
 	
 	private MediaPlayer mp;
 	private int state;
@@ -36,31 +39,36 @@ public class NativeAudioAssetComplex implements OnPreparedListener, OnCompletion
 
     Callable<Void> completeCallback;
 
+	private JSONObject controlsInfos;
+
 
 	public NativeAudioAssetComplex(String url, float volume)  throws IOException
 	{
-
-		state = INVALID;
-		mp = new MediaPlayer();
-		mp.setOnCompletionListener(this);
-		mp.setOnPreparedListener(this);
+		this.prepareMediaPlayer(volume);
 		mp.setDataSource(url);
-		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
-		mp.setVolume(volume, volume);
 		mp.prepareAsync();
 	}
 
 	public NativeAudioAssetComplex(FileDescriptor fd, float volume)  throws IOException
 	{
+		this.prepareMediaPlayer(volume);
+		mp.setDataSource(fd);
+		mp.prepare();
+	}
 
+	private void prepareMediaPlayer(float volume) {
 		state = INVALID;
 		mp = new MediaPlayer();
-        mp.setOnCompletionListener(this);
-        mp.setOnPreparedListener(this);
-		mp.setDataSource(fd);
-		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+		mp.setOnCompletionListener(this);
+		mp.setOnPreparedListener(this);
+		mp.setAudioAttributes(
+				new AudioAttributes.Builder()
+						.setUsage(AudioAttributes.USAGE_MEDIA)
+						.setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+						.build()
+		);
+		//mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
 		mp.setVolume(volume, volume);
-		mp.prepare();
 	}
 
 	public void play(Callable<Void> completeCb) throws IOException
@@ -227,6 +235,14 @@ public class NativeAudioAssetComplex implements OnPreparedListener, OnCompletion
 
 		mp.seekTo(position);
 
+	}
+
+	public void setControlsInfos(JSONObject infos){
+		this.controlsInfos = infos;
+	}
+
+	public JSONObject getControlsInfos() {
+		return this.controlsInfos;
 	}
 
 }

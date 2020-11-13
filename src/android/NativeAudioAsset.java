@@ -14,6 +14,8 @@ import java.util.concurrent.Callable;
 
 import android.content.res.AssetFileDescriptor;
 
+import org.json.JSONObject;
+
 public class NativeAudioAsset
 {
 	NativeAudioAssetComplex track;
@@ -79,4 +81,9 @@ public class NativeAudioAsset
 	public Integer getDuration(){
         return track.getDuration();
     }
+
+    public void setControlsInfos(JSONObject infos){ track.setControlsInfos(infos); }
+
+    public JSONObject getControlsInfos() {return track.getControlsInfos();}
+
 }

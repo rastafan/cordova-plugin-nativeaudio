@@ -30,10 +30,21 @@
                 <param name="android-package" value="com.rastafan.cordova.plugin.nativeaudio.NativeAudio"/>
             </feature>
         </config-file>
+		
+		<config-file target="AndroidManifest.xml" parent="/manifest/application">
+			<service android:name="com.rastafan.cordova.plugin.nativeaudio.MusicControlsNotificationKiller"></service>
+		</config-file>
 
         <source-file src="src/android/NativeAudio.java" target-dir="src/com/rastafan/cordova/plugin/nativeaudio"/>
         <source-file src="src/android/NativeAudioAsset.java" target-dir="src/com/rastafan/cordova/plugin/nativeaudio"/>
         <source-file src="src/android/NativeAudioAssetComplex.java" target-dir="src/com/rastafan/cordova/plugin/nativeaudio"/>
+		
+		<source-file src="src/android/MediaSessionCallback.java" target-dir="src/com/rastafan/cordova/plugin/nativeaudio"/>
+		<source-file src="src/android/MusicControlsBroadcastReceiver.java" target-dir="src/com/rastafan/cordova/plugin/nativeaudio"/>
+		<source-file src="src/android/MusicControlsInfos.java" target-dir="src/com/rastafan/cordova/plugin/nativeaudio"/>
+		<source-file src="src/android/MusicControlsNotification.java" target-dir="src/com/rastafan/cordova/plugin/nativeaudio"/>
+		<source-file src="src/android/KillBinder.java" target-dir="src/com/rastafan/cordova/plugin/nativeaudio"/>
+		<source-file src="src/android/MusicControlsNotificationKiller.java" target-dir="src/com/rastafan/cordova/plugin/nativeaudio"/>
 
         <config-file target="AndroidManifest.xml" parent="/*">
             <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>

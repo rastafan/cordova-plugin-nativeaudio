@@ -32,19 +32,23 @@ module.exports  = {
         return cordova.exec(successCallback, errorCallback, "NativeAudio", "preloadSimple", [id, assetPath]);
     },
     
-    preloadComplex: function(id, assetPath, volume, delay, track_name, successCallback, errorCallback) {
-        return cordova.exec(successCallback, errorCallback, "NativeAudio", "preloadComplex", [id, assetPath, parseFloat(volume), parseFloat(delay), track_name]);
+    preloadComplex: function(id, assetPath, volume, delay, options, successCallback, errorCallback) {
+        return cordova.exec(successCallback, errorCallback, "NativeAudio", "preloadComplex", [id, assetPath, parseFloat(volume), parseFloat(delay), options]);
     },
 
-    addPlayPauseCallbackListener: function(id, successCallback, errorCallback) {
-        cordova.exec(successCallback, errorCallback, "NativeAudio", "addPlayPauseCallbackListener", [id]);
+    addControlsCallback: function(id, successCallback, errorCallback) {
+        cordova.exec(successCallback, errorCallback, "NativeAudio", "addControlsCallback", [id]);
     },
 
-    play: function(id, successCallback, errorCallback, completeCallback) {
+	setControls: function(id, successCallback, errorCallback) {
+        cordova.exec(successCallback, errorCallback, "NativeAudio", "setControls", [id]);
+    },
+	
+    play: function(id, setControls, successCallback, errorCallback, completeCallback) {
         if(typeof completeCallback === "function") {
         	cordova.exec(completeCallback, errorCallback, "NativeAudio", "addCompleteListener", [id]);    
         }
-        return cordova.exec(successCallback, errorCallback, "NativeAudio", "play", [id]);
+        return cordova.exec(successCallback, errorCallback, "NativeAudio", "play", [id, setControls]);
         
     },
 
@@ -52,8 +56,8 @@ module.exports  = {
         return cordova.exec(successCallback, errorCallback, "NativeAudio", "stop", [id]);
     },
 
-    loop: function(id, successCallback, errorCallback) {
-        return cordova.exec(successCallback, errorCallback, "NativeAudio", "loop", [id]);
+    loop: function(id, setControls, successCallback, errorCallback) {
+        return cordova.exec(successCallback, errorCallback, "NativeAudio", "loop", [id, setControls]);
     },
 
     unload: function(id, successCallback, errorCallback) {
