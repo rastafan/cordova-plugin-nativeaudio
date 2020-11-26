@@ -238,7 +238,7 @@ id idSkipBackwardListener = nil;
                         
                         NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
                         
-                        [playInfo setObject:[NSNumber numberWithDouble:[_asset getCurrentPosition]/1000] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
+                        //[playInfo setObject:[NSNumber numberWithDouble:[_asset getCurrentPosition]/1000] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
                         [playInfo setObject:[NSNumber numberWithInt:1] forKey:MPNowPlayingInfoPropertyPlaybackRate];
                         
                         [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
@@ -350,7 +350,7 @@ id idSkipBackwardListener = nil;
                     
                     NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
                     
-                    [playInfo setObject:[NSNumber numberWithDouble:[_asset getCurrentPosition]/1000] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
+                    //[playInfo setObject:[NSNumber numberWithDouble:[_asset getCurrentPosition]/1000] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
                     [playInfo setObject:[NSNumber numberWithInt:0] forKey:MPNowPlayingInfoPropertyPlaybackRate];
                     
                     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
@@ -406,7 +406,7 @@ id idSkipBackwardListener = nil;
                     [self setControlsInfo:audioID];
                     NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
                     
-                    [playInfo setObject:[NSNumber numberWithDouble:[_asset getCurrentPosition]/1000] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
+                    //[playInfo setObject:[NSNumber numberWithDouble:[_asset getCurrentPosition]/1000] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
                     [playInfo setObject:[NSNumber numberWithInt:1] forKey:MPNowPlayingInfoPropertyPlaybackRate];
                     
                     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
@@ -442,7 +442,7 @@ id idSkipBackwardListener = nil;
     
     NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
     
-    [playInfo setObject:[NSNumber numberWithDouble:[_asset getCurrentPosition]/1000] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
+    //[playInfo setObject:[NSNumber numberWithDouble:[_asset getCurrentPosition]/1000] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
     
     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
     
@@ -454,7 +454,7 @@ id idSkipBackwardListener = nil;
     
     NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
     
-    [playInfo setObject:[NSNumber numberWithDouble:[_asset getCurrentPosition]/1000] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
+    //[playInfo setObject:[NSNumber numberWithDouble:[_asset getCurrentPosition]/1000] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
     
     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
     
@@ -687,7 +687,7 @@ static void (mySystemSoundCompletionProc)(SystemSoundID ssID,void* clientData)
                 if([currentAudioInControl isEqualToString:audioID]){
                     NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
                     
-                    [playInfo setObject:[NSNumber numberWithDouble:duration/1000]  forKey:MPMediaItemPropertyPlaybackDuration];
+                    //[playInfo setObject:[NSNumber numberWithDouble:duration/1000]  forKey:MPMediaItemPropertyPlaybackDuration];
                     
                     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
                 }
@@ -776,7 +776,7 @@ static void (mySystemSoundCompletionProc)(SystemSoundID ssID,void* clientData)
                 if([currentAudioInControl isEqualToString:audioID]){
                     NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
                     
-                    [playInfo setObject:@([position intValue] / 1000) forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
+                    //[playInfo setObject:@([position intValue] / 1000) forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
                     
                     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
                 }
@@ -919,8 +919,11 @@ static void (mySystemSoundCompletionProc)(SystemSoundID ssID,void* clientData)
             NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
             
             [playInfo setObject:[NSString stringWithFormat:@"%@", [asset getTrackName] ] forKey:MPMediaItemPropertyTitle];
-            //[playInfo setObject:[NSNumber numberWithInt:0] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
-            //[playInfo setObject:[NSNumber numberWithInt:0] forKey:MPMediaItemPropertyPlaybackDuration];
+
+            
+            //[playInfo removeObjectForKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
+            //[playInfo removeObjectForKey:MPMediaItemPropertyPlaybackDuration];
+            
             [playInfo setObject:[NSString stringWithFormat:@"%@", [controlsInfo track]] forKey:MPMediaItemPropertyTitle];
             [playInfo setObject:[NSString stringWithFormat:@"%@", [controlsInfo artist]] forKey:MPMediaItemPropertyArtist];
             [playInfo setObject:[NSString stringWithFormat:@"%@", [controlsInfo album]] forKey:MPMediaItemPropertyAlbumTitle];
