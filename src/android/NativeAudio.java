@@ -462,8 +462,9 @@ public class NativeAudio extends CordovaPlugin implements AudioManager.OnAudioFo
 			if (assetMap.containsKey(audioID)) {
 				NativeAudioAsset asset = assetMap.get(audioID);
 				asset.stop();
+				asset.getControlsInfos().put("isPlaying", false);
+
 				if(asset.getControlsInfos() != null && audioID.equals(currentAudioInControl)) {
-					asset.getControlsInfos().put("isPlaying", false);
 					executeSetControls(data);
 					setMediaPlaybackState(NativeAudioAssetComplex.INVALID);
 				}
@@ -486,9 +487,9 @@ public class NativeAudio extends CordovaPlugin implements AudioManager.OnAudioFo
 			if (assetMap.containsKey(audioID)) {
 				NativeAudioAsset asset = assetMap.get(audioID);
 				asset.pause();
+				asset.getControlsInfos().put("isPlaying", false);
 
 				if(asset.getControlsInfos() != null && audioID.equals(currentAudioInControl)) {
-					asset.getControlsInfos().put("isPlaying", false);
 					executeSetControls(data);
 					setMediaPlaybackState(NativeAudioAssetComplex.PAUSED);
 				}
