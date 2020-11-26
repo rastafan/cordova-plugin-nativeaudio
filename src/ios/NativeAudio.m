@@ -27,11 +27,20 @@ NSString* INFO_SEEK_DONE = @"(NATIVE AUDIO) Seek done.";
 
 NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
 
+id idPlayListener = nil;
+id idPauseListener = nil;
+id idSkipForwardListener = nil;
+id idSkipBackwardListener = nil;
 
 - (void)pluginInitialize
 
 {
     self.fadeMusic = NO;
+    
+    
+    if(controlCBMapping == nil) {
+        controlCBMapping = [NSMutableDictionary dictionary];
+    }
     
     //AudioSessionInitialize(NULL, NULL, nil , nil); //DEPRECATED
     [[AVAudioSession sharedInstance] setActive:YES error:nil];
@@ -157,16 +166,17 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
         delay = [arguments objectAtIndex:3];
     }
     
-    NSString *trackName = nil;
+    NSDictionary *controlsOptions = nil;
     if ( [arguments count] > 4 && [arguments objectAtIndex:4] != [NSNull null])
     {
         // The trackName is the name shown in the RemoteCommandCenter
-        trackName = [arguments objectAtIndex:4];
+        controlsOptions = [arguments objectAtIndex:4];
     }
     
     if(audioMapping == nil) {
         audioMapping = [NSMutableDictionary dictionary];
     }
+    
     
     NSNumber* existingReference = audioMapping[audioID];
     
@@ -178,7 +188,7 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                 NativeAudioAsset* asset = [[NativeAudioAsset alloc] initWithPath:assetPath
                                                                       withVolume:volume
                                                                    withFadeDelay:delay
-                                                                   withTrackName:trackName];
+                                                                withControlsInfo:controlsOptions];
                 
                 self->audioMapping[audioID] = asset;
                 
@@ -198,11 +208,12 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
     }];
 }
 
-- (MPRemoteCommandHandlerStatus) play:(CDVInvokedUrlCommand *)command
+- (void) play:(CDVInvokedUrlCommand *)command
 {
     NSString *callbackId = command.callbackId;
     NSArray* arguments = command.arguments;
     NSString *audioID = [arguments objectAtIndex:0];
+    BOOL setControls = [arguments objectAtIndex:1];
     
     [self.commandDelegate runInBackground:^{
         if (self->audioMapping) {
@@ -220,41 +231,18 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                         [_asset play];
                     }
                     
-                    MPRemoteCommandCenter *remoteCommandCenter = [MPRemoteCommandCenter sharedCommandCenter];
-                    //[[remoteCommandCenter skipForwardCommand] addTarget:self action:@selector(skipForwar)];
-                    [[remoteCommandCenter playCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
-                        return [self play:command];
-                    }];
-                    [[remoteCommandCenter pauseCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
-                        return [self pause:command];
-                    }];
-                    
-                    NSString *trackName = [_asset getTrackName];
-                    if(trackName){
+                    if(setControls){
                         
-                        [[remoteCommandCenter seekForwardCommand] setEnabled:NO];
-                        [[remoteCommandCenter seekBackwardCommand] setEnabled:NO];
+                        [[_asset getControlsInfo] setIsPlaying:true];
+                        [self setControlsInfo:audioID];
                         
-                        [[remoteCommandCenter skipForwardCommand] setEnabled:YES];
-                        [[remoteCommandCenter skipBackwardCommand] setEnabled:YES];
-                        
-                        [[remoteCommandCenter skipForwardCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
-                            return [self skipForward:_asset];
-                        }];
-                        
-                        [[remoteCommandCenter skipBackwardCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
-                            return [self skipBackward:_asset];
-                        }];
-                        
-
                         NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
                         
-                        [playInfo setObject:[NSString stringWithFormat:@"%@", [_asset getTrackName] ] forKey:MPMediaItemPropertyTitle];
                         [playInfo setObject:[NSNumber numberWithDouble:[_asset getCurrentPosition]/1000] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
-                        [playInfo setObject:[NSNumber numberWithDouble:[_asset getDuration]/1000]  forKey:MPMediaItemPropertyPlaybackDuration];
                         [playInfo setObject:[NSNumber numberWithInt:1] forKey:MPNowPlayingInfoPropertyPlaybackRate];
                         
                         [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
+                        
                     }
                     
                     
@@ -282,7 +270,6 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
         }
     }];
     
-    return MPRemoteCommandHandlerStatusSuccess;
 }
 
 - (void) stop:(CDVInvokedUrlCommand *)command
@@ -305,16 +292,16 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                     [_asset stop];
                 }
                 
-                if([_asset getTrackName]){
+                if([currentAudioInControl isEqualToString:audioID]){
+                    [[_asset getControlsInfo] setIsPlaying:false];
+                    
+                    
                     NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
                     
-                    [playInfo setValue:[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleDisplayName"] forKey:MPMediaItemPropertyTitle];
-                    
-                    [playInfo setObject:[NSNumber numberWithDouble:0] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
-                    [playInfo setObject:[NSNumber numberWithDouble:0]  forKey:MPMediaItemPropertyPlaybackDuration];
                     [playInfo setObject:[NSNumber numberWithInt:0] forKey:MPNowPlayingInfoPropertyPlaybackRate];
                     
                     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
+                    
                 }
                 
                 NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", INFO_PLAYBACK_STOP, audioID];
@@ -337,7 +324,7 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
         [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];    }
 }
 
-- (MPRemoteCommandHandlerStatus) pause:(CDVInvokedUrlCommand *)command
+- (void) pause:(CDVInvokedUrlCommand *)command
 {
     NSString *callbackId = command.callbackId;
     NSArray* arguments = command.arguments;
@@ -357,13 +344,17 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                     [_asset pause];
                 }
                 
-                if([_asset getTrackName]){
+                if([currentAudioInControl isEqualToString:audioID]){
+                    
+                    [[_asset getControlsInfo] setIsPlaying:true];
+                    
                     NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
-                                        
+                    
                     [playInfo setObject:[NSNumber numberWithDouble:[_asset getCurrentPosition]/1000] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
                     [playInfo setObject:[NSNumber numberWithInt:0] forKey:MPNowPlayingInfoPropertyPlaybackRate];
                     
                     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
+                    
                 }
                 
                 NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", INFO_PLAYBACK_STOP, audioID];
@@ -382,24 +373,22 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
             [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];
         }
         
-        return MPRemoteCommandHandlerStatusSuccess;
     } else {
         NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", ERROR_REFERENCE_MISSING, audioID];
         [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];
-        
-        return MPRemoteCommandHandlerStatusCommandFailed;
         
     }
 }
 
 
 
-- (MPRemoteCommandHandlerStatus) loop:(CDVInvokedUrlCommand *)command
+- (void) loop:(CDVInvokedUrlCommand *)command
 {
     
     NSString *callbackId = command.callbackId;
     NSArray* arguments = command.arguments;
     NSString *audioID = [arguments objectAtIndex:0];
+    BOOL setControls = [arguments objectAtIndex:1];
     
     
     if ( audioMapping ) {
@@ -412,41 +401,18 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                 NativeAudioAsset *_asset = (NativeAudioAsset*) asset;
                 [_asset loop];
                 
-                MPRemoteCommandCenter *remoteCommandCenter = [MPRemoteCommandCenter sharedCommandCenter];
-                //[[remoteCommandCenter skipForwardCommand] addTarget:self action:@selector(skipForwar)];
-                [[remoteCommandCenter playCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
-                    return [self loop:command];
-                }];
-                [[remoteCommandCenter pauseCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
-                    return [self pause:command];
-                }];
-                
-                NSString *trackName = [_asset getTrackName];
-                if(trackName){
-                    [[remoteCommandCenter seekForwardCommand] setEnabled:NO];
-                    [[remoteCommandCenter seekBackwardCommand] setEnabled:NO];
-                    
-                    [[remoteCommandCenter skipForwardCommand] setEnabled:YES];
-                    [[remoteCommandCenter skipBackwardCommand] setEnabled:YES];
-                    
-                    [[remoteCommandCenter skipForwardCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
-                        return [self skipForward:_asset];
-                    }];
-                    
-                    [[remoteCommandCenter skipBackwardCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
-                        return [self skipBackward:_asset];
-                    }];
-                    
-
+                if(setControls){
+                    [[_asset getControlsInfo] setIsPlaying:true];
+                    [self setControlsInfo:audioID];
                     NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
                     
-                    [playInfo setObject:[NSString stringWithFormat:@"%@", [_asset getTrackName] ] forKey:MPMediaItemPropertyTitle];
                     [playInfo setObject:[NSNumber numberWithDouble:[_asset getCurrentPosition]/1000] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
-                    [playInfo setObject:[NSNumber numberWithDouble:[_asset getDuration]/1000]  forKey:MPMediaItemPropertyPlaybackDuration];
                     [playInfo setObject:[NSNumber numberWithInt:1] forKey:MPNowPlayingInfoPropertyPlaybackRate];
                     
                     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
+                    
                 }
+                
                 
                 NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", INFO_PLAYBACK_LOOP, audioID];
                 [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: RESULT] callbackId:callbackId];
@@ -462,19 +428,15 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
                 [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];
             }
             
-            return MPRemoteCommandHandlerStatusSuccess;
         } else {
             NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", ERROR_REFERENCE_MISSING, audioID];
             [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];
             
-            return MPRemoteCommandHandlerStatusCommandFailed;
         };
-    } else {
-        return MPRemoteCommandHandlerStatusCommandFailed;
     }
 }
 
--(MPRemoteCommandHandlerStatus) skipForward:(NativeAudioAsset *) _asset
+-(void) skipForward:(NativeAudioAsset *) _asset
 {
     [_asset skipForward];
     
@@ -484,10 +446,9 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
     
     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
     
-    return MPRemoteCommandHandlerStatusSuccess;
 }
 
--(MPRemoteCommandHandlerStatus) skipBackward:(NativeAudioAsset *) _asset
+-(void) skipBackward:(NativeAudioAsset *) _asset
 {
     [_asset skipBackward];
     
@@ -497,7 +458,6 @@ NSString* INFO_DURATION_RETURNED = @"(NATIVE AUDIO) Duration returned.";
     
     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
     
-    return MPRemoteCommandHandlerStatusSuccess;
 }
 
 - (void) unload:(CDVInvokedUrlCommand *)command
@@ -724,9 +684,9 @@ static void (mySystemSoundCompletionProc)(SystemSoundID ssID,void* clientData)
                 NativeAudioAsset *_asset = (NativeAudioAsset*) asset;
                 NSTimeInterval duration = [_asset getDuration];
                 
-                if([_asset getTrackName]){
+                if([currentAudioInControl isEqualToString:audioID]){
                     NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
-
+                    
                     [playInfo setObject:[NSNumber numberWithDouble:duration/1000]  forKey:MPMediaItemPropertyPlaybackDuration];
                     
                     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
@@ -813,11 +773,11 @@ static void (mySystemSoundCompletionProc)(SystemSoundID ssID,void* clientData)
                 NativeAudioAsset *_asset = (NativeAudioAsset*) asset;
                 [_asset seekTo:position];
                 
-                if([_asset getTrackName]){
+                if([currentAudioInControl isEqualToString:audioID]){
                     NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
                     
                     [playInfo setObject:@([position intValue] / 1000) forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
-
+                    
                     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
                 }
                 
@@ -842,4 +802,203 @@ static void (mySystemSoundCompletionProc)(SystemSoundID ssID,void* clientData)
     }
 }
 
+- (void) addControlsCallback:(CDVInvokedUrlCommand *)command;
+{
+    NSString *callbackId = command.callbackId;
+    NSArray* arguments = command.arguments;
+    NSString *audioID = [arguments objectAtIndex:0];
+    
+    if (audioMapping) {
+        
+        NSObject* asset = audioMapping[audioID];
+        
+        if (asset != nil){
+            
+            self->controlCBMapping[audioID] = callbackId;
+            
+        } else {
+            
+            NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", ERROR_REFERENCE_MISSING, audioID];
+            [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];
+        }
+        
+    } else {
+        
+        NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", ERROR_REFERENCE_MISSING, audioID];
+        [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];
+    }
+}
+
+- (void) setControls:(CDVInvokedUrlCommand *)command;
+{
+    NSString *callbackId = command.callbackId;
+    NSArray* arguments = command.arguments;
+    NSString *audioID = [arguments objectAtIndex:0];
+    
+    if (audioMapping) {
+        
+        NSObject* asset = audioMapping[audioID];
+        
+        if (asset != nil){
+            
+            [self setControlsInfo:audioID];
+            
+        } else {
+            
+            NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", ERROR_REFERENCE_MISSING, audioID];
+            [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];
+        }
+        
+    } else {
+        
+        NSString *RESULT = [NSString stringWithFormat:@"%@ (%@)", ERROR_REFERENCE_MISSING, audioID];
+        [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: RESULT] callbackId:callbackId];
+    }
+}
+
+- (void) setControlsInfo:(NSString *) audioID
+{
+    MPRemoteCommandCenter *remoteCommandCenter = [MPRemoteCommandCenter sharedCommandCenter];
+    
+    [[remoteCommandCenter togglePlayPauseCommand] setEnabled:true];
+    
+    //[[remoteCommandCenter skipForwardCommand] addTarget:self action:@selector(skipForwar)];
+    if(idPlayListener != nil) {
+        [[remoteCommandCenter playCommand] removeTarget:idPlayListener];
+        idPlayListener = nil;
+    }
+    idPlayListener = [[remoteCommandCenter playCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        return [self executeControlsCallback:@"music-controls-play" withAudioId:audioID];
+    }];
+    
+    if(idPauseListener != nil) {
+        [[remoteCommandCenter pauseCommand] removeTarget:idPauseListener];
+        idPauseListener = nil;
+    }
+    idPauseListener = [[remoteCommandCenter pauseCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        return [self executeControlsCallback:@"music-controls-pause" withAudioId:audioID];
+    }];
+    
+    if (audioMapping) {
+        
+        NativeAudioAsset* asset = audioMapping[audioID];
+        
+        if (asset != nil){
+            
+            MusicControlsInfo* controlsInfo = [asset getControlsInfo];
+            
+            
+            [[remoteCommandCenter seekForwardCommand] setEnabled:[controlsInfo hasNext]];
+            [[remoteCommandCenter seekBackwardCommand] setEnabled:[controlsInfo hasPrev]];
+            
+            [[remoteCommandCenter skipForwardCommand] setEnabled:[controlsInfo hasSkipForward]];
+            [[remoteCommandCenter skipBackwardCommand] setEnabled:[controlsInfo hasSkipBackward]];
+            
+            if(idSkipForwardListener != nil) {
+                [[remoteCommandCenter skipForwardCommand] removeTarget:idSkipForwardListener];
+                idSkipForwardListener = nil;
+            }
+            if([controlsInfo hasSkipForward]){
+                //[[remoteCommandCenter skipForwardCommand] removeTarget:<#(nullable id)#>]
+                idSkipBackwardListener = [[remoteCommandCenter skipForwardCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+                    return [self executeControlsCallback:@"music-controls-skip-forward" withAudioId:audioID];
+                }];
+            }
+            
+            if(idSkipBackwardListener != nil) {
+                [[remoteCommandCenter skipBackwardCommand] removeTarget:idSkipBackwardListener];
+                idSkipBackwardListener = nil;
+            }
+            if([controlsInfo hasSkipBackward]){
+                idSkipBackwardListener = [[remoteCommandCenter skipBackwardCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+                    return [self executeControlsCallback:@"music-controls-skip-backward" withAudioId:audioID];
+                }];
+            }
+            
+            
+            NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
+            
+            [playInfo setObject:[NSString stringWithFormat:@"%@", [asset getTrackName] ] forKey:MPMediaItemPropertyTitle];
+            //[playInfo setObject:[NSNumber numberWithInt:0] forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
+            //[playInfo setObject:[NSNumber numberWithInt:0] forKey:MPMediaItemPropertyPlaybackDuration];
+            [playInfo setObject:[NSString stringWithFormat:@"%@", [controlsInfo track]] forKey:MPMediaItemPropertyTitle];
+            [playInfo setObject:[NSString stringWithFormat:@"%@", [controlsInfo artist]] forKey:MPMediaItemPropertyArtist];
+            [playInfo setObject:[NSString stringWithFormat:@"%@", [controlsInfo album]] forKey:MPMediaItemPropertyAlbumTitle];
+            
+            MPMediaItemArtwork * mediaItemArtwork = [self createCoverArtwork:[controlsInfo cover]];
+            if (mediaItemArtwork != nil) {
+                [playInfo setObject:mediaItemArtwork forKey:MPMediaItemPropertyArtwork];
+            }
+            
+            
+            [playInfo setObject:[NSNumber numberWithBool:[controlsInfo isPlaying]] forKey:MPNowPlayingInfoPropertyPlaybackRate];
+            
+            [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = playInfo;
+            
+            currentAudioInControl = audioID;
+            
+        } else {
+            NSLog(@"setControlsInfo - NO ASSET FOUND");
+        }
+        
+    } else {
+        NSLog(@"setControlsInfo - NO AUDIO MAPPING FOUND");
+    }
+}
+
+- (MPRemoteCommandHandlerStatus) executeControlsCallback:(NSString *) action withAudioId:(NSString *) audioID {
+    NSString *callbackId = self->controlCBMapping[audioID];
+    
+    if(callbackId) {
+        NSString * jsonAction = [NSString stringWithFormat:@"{\"message\":\"%@\"}", action];
+        CDVPluginResult * pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:jsonAction];
+        [pluginResult setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
+        return MPRemoteCommandHandlerStatusSuccess;
+    } else {
+        return MPRemoteCommandHandlerStatusCommandFailed;
+    }
+}
+
+- (MPMediaItemArtwork *) createCoverArtwork: (NSString *) coverUri {
+    UIImage * coverImage = nil;
+    
+    if (coverUri == nil) {
+        return nil;
+    }
+    
+    if ([coverUri hasPrefix:@"http://"] || [coverUri hasPrefix:@"https://"]) {
+        NSURL * coverImageUrl = [NSURL URLWithString:coverUri];
+        NSData * coverImageData = [NSData dataWithContentsOfURL: coverImageUrl];
+        
+        coverImage = [UIImage imageWithData: coverImageData];
+    }
+    else if ([coverUri hasPrefix:@"file://"]) {
+        NSString * fullCoverImagePath = [coverUri stringByReplacingOccurrencesOfString:@"file://" withString:@""];
+        
+        if ([[NSFileManager defaultManager] fileExistsAtPath: fullCoverImagePath]) {
+            coverImage = [[UIImage alloc] initWithContentsOfFile: fullCoverImagePath];
+        }
+    }
+    else if (![coverUri isEqual:@""]) {
+        NSString * baseCoverImagePath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+        NSString * fullCoverImagePath = [NSString stringWithFormat:@"%@%@", baseCoverImagePath, coverUri];
+        
+        if ([[NSFileManager defaultManager] fileExistsAtPath:fullCoverImagePath]) {
+            coverImage = [UIImage imageNamed:fullCoverImagePath];
+        }
+    }
+    else {
+        coverImage = [UIImage imageNamed:@"none"];
+    }
+    
+    return [self isCoverImageValid:coverImage] ? [[MPMediaItemArtwork alloc] initWithBoundsSize:coverImage.size requestHandler:^UIImage * _Nonnull(CGSize size) {
+        return coverImage;
+    }] : nil;
+    //return [self isCoverImageValid:coverImage] ? [[MPMediaItemArtwork alloc] initWithImage:coverImage] : nil;
+}
+
+- (bool) isCoverImageValid: (UIImage *) coverImage {
+    return coverImage != nil && ([coverImage CIImage] != nil || [coverImage CGImage] != nil);
+}
 @end

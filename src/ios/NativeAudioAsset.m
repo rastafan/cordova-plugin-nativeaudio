@@ -20,7 +20,7 @@
 static const CGFloat FADE_STEP = 0.05;
 static const CGFloat FADE_DELAY = 0.08;
 
--(id) initWithPath:(NSString*) path withVolume:(NSNumber*) volume withFadeDelay:(NSNumber *)delay withTrackName:(NSString *)name
+-(id) initWithPath:(NSString*) path withVolume:(NSNumber*) volume withFadeDelay:(NSNumber *)delay withControlsInfo:(NSDictionary *) controlsInfo
 {
     setenv("CFNETWORK_DIAGNOSTICS","3",1);
     self = [super init];
@@ -32,6 +32,12 @@ static const CGFloat FADE_DELAY = 0.08;
             pathURL = [NSURL URLWithString: path];
         }else{
             pathURL = [NSURL fileURLWithPath: path];
+        }
+        
+        if(controlsInfo != nil){
+            self->controlsInfo = [[MusicControlsInfo alloc] initWithDictionary:controlsInfo];
+        } else {
+            self->controlsInfo = nil;
         }
         
         AVURLAsset *asset = [AVURLAsset URLAssetWithURL:pathURL options:nil];
@@ -52,14 +58,7 @@ static const CGFloat FADE_DELAY = 0.08;
         }
         
         initialVolume = volume;
-        
-        if(name)
-        {
-            trackName = name;
-        } else {
-            trackName = nil;
-        }
-        
+       
         
     }
     return(self);
@@ -301,7 +300,11 @@ static const CGFloat FADE_DELAY = 0.08;
 
 - (NSString*) getTrackName;
 {
-    return self->trackName;
+    if(self->controlsInfo){
+        return [self->controlsInfo track];
+    } else {
+        return nil;
+    }
 }
 
 - (void) skipForward;
@@ -313,6 +316,11 @@ static const CGFloat FADE_DELAY = 0.08;
 - (void) skipBackward;
 {
     [self.player seekToTime: CMTimeSubtract(self.player.currentTime,CMTimeMakeWithSeconds(10, 1))];
+}
+
+- (MusicControlsInfo *) getControlsInfo;
+{
+    return self->controlsInfo;
 }
 
 @end

@@ -11,6 +11,7 @@
 #import <AVFoundation/AVPlayerItem.h>
 #import <AVFoundation/AVAsset.h>
 #import <AVFoundation/AVAssetResourceLoader.h>
+#import "MusicControlsInfo.h"
 
 typedef void (^CompleteCallback)(NSString*);
 typedef void (^PlayPauseCallback)(NSString*, BOOL);
@@ -21,10 +22,10 @@ typedef void (^PlayPauseCallback)(NSString*, BOOL);
     PlayPauseCallback playPauseCallback;
     NSNumber *initialVolume;
     NSNumber *fadeDelay;
-    NSString *trackName;
+    MusicControlsInfo *controlsInfo;
 }
 
-- (id) initWithPath:(NSString*) path withVolume:(NSNumber*) volume withFadeDelay:(NSNumber *)delay withTrackName:(NSString *)name;
+- (id) initWithPath:(NSString*) path withVolume:(NSNumber*) volume withFadeDelay:(NSNumber *)delay withControlsInfo:(NSDictionary *) controlsInfo;
 - (void) play;
 - (void) playWithFade;
 - (void) pause;
@@ -44,4 +45,5 @@ typedef void (^PlayPauseCallback)(NSString*, BOOL);
 - (NSString*) getTrackName;
 - (void) skipForward;
 - (void) skipBackward;
+- (MusicControlsInfo *) getControlsInfo;
 @end

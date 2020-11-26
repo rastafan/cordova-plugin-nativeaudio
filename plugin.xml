@@ -73,6 +73,9 @@
         <header-file src="src/ios/NativeAudioAsset.h"/>
         <source-file src="src/ios/NativeAudioAsset.m"/>
 
+        <header-file src="src/ios/MusicControlsInfo.h"/>
+        <source-file src="src/ios/MusicControlsInfo.m"/>
+
     </platform>
 
 </plugin>

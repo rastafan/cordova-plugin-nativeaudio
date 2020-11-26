@@ -16,8 +16,10 @@
 @interface NativeAudio : CDVPlugin
 {
     NSMutableDictionary *audioMapping;
+    NSMutableDictionary *controlCBMapping;
     NSMutableDictionary *completeCallbacks;
     NSMutableDictionary *playPauseCallbacks;
+    NSString *currentAudioInControl;
 }
 
 #define OPT_FADE_MUSIC @"fadeMusic"
@@ -26,12 +28,12 @@
 - (void)setOptions:(CDVInvokedUrlCommand *)command;
 - (void)preloadSimple:(CDVInvokedUrlCommand *)command;
 - (void)preloadComplex:(CDVInvokedUrlCommand *)command;
-- (MPRemoteCommandHandlerStatus)play:(CDVInvokedUrlCommand *)command;
+- (void)play:(CDVInvokedUrlCommand *)command;
 - (void)stop:(CDVInvokedUrlCommand *)command;
-- (MPRemoteCommandHandlerStatus)pause:(CDVInvokedUrlCommand *)command;
-- (MPRemoteCommandHandlerStatus)loop:(CDVInvokedUrlCommand *)command;
-- (MPRemoteCommandHandlerStatus) skipForward:(NativeAudioAsset *) _asset;
-- (MPRemoteCommandHandlerStatus) skipBackward:(NativeAudioAsset *) _asset;
+- (void)pause:(CDVInvokedUrlCommand *)command;
+- (void)loop:(CDVInvokedUrlCommand *)command;
+- (void)skipForward:(NativeAudioAsset *) _asset;
+- (void)skipBackward:(NativeAudioAsset *) _asset;
 - (void)unload:(CDVInvokedUrlCommand *)command;
 - (void)setVolumeForComplexAsset:(CDVInvokedUrlCommand *)command;
 - (void)addCompleteListener:(CDVInvokedUrlCommand *)command;
