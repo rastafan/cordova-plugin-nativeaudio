@@ -183,7 +183,7 @@ public class NativeAudio extends CordovaPlugin implements AudioManager.OnAudioFo
 			@Override
 			public void success(String message) {
 				MusicControlsInfos infos = notification.getInfos();
-				if(controlsCallbackMap.containsKey(infos.audioId)) {
+				if(infos != null && controlsCallbackMap.containsKey(infos.audioId)) {
 					CallbackContext cb = (CallbackContext)controlsCallbackMap.get(infos.audioId);
 					PluginResult result = new PluginResult(Status.OK, message);
 					result.setKeepCallback(true);
@@ -462,11 +462,13 @@ public class NativeAudio extends CordovaPlugin implements AudioManager.OnAudioFo
 			if (assetMap.containsKey(audioID)) {
 				NativeAudioAsset asset = assetMap.get(audioID);
 				asset.stop();
-				asset.getControlsInfos().put("isPlaying", false);
 
-				if(asset.getControlsInfos() != null && audioID.equals(currentAudioInControl)) {
-					executeSetControls(data);
-					setMediaPlaybackState(NativeAudioAssetComplex.INVALID);
+				if(asset.getControlsInfos() != null) {
+					asset.getControlsInfos().put("isPlaying", false);
+					if (audioID.equals(currentAudioInControl)) {
+						executeSetControls(data);
+						setMediaPlaybackState(NativeAudioAssetComplex.INVALID);
+					}
 				}
 			} else {
 				return new PluginResult(Status.ERROR, ERROR_NO_AUDIOID);
