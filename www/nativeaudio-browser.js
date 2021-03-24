@@ -69,3 +69,13 @@ exports.unload = function(id, success, fail) {
         if(typeof fail === 'function') fail();
     }
 };
+
+exports.pause = function(id, success, fail) {
+    var res = __res_cache[ id ];
+    if(typeof res === 'object') {
+        res.pause();
+        if(typeof success === 'function') success();
+    } else {
+        if(typeof fail === 'function') fail();
+    }
+};

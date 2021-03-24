@@ -292,7 +292,7 @@ id idSkipBackwardListener = nil;
                     [_asset stop];
                 }
                 
-                if([currentAudioInControl isEqualToString:audioID]){
+                if([currentAudioInControl isEqual:audioID]){
                     [[_asset getControlsInfo] setIsPlaying:false];
                     
                     
@@ -344,7 +344,7 @@ id idSkipBackwardListener = nil;
                     [_asset pause];
                 }
                 
-                if([currentAudioInControl isEqualToString:audioID]){
+                if([currentAudioInControl isEqual:audioID]){
                     
                     [[_asset getControlsInfo] setIsPlaying:true];
                     
@@ -684,7 +684,7 @@ static void (mySystemSoundCompletionProc)(SystemSoundID ssID,void* clientData)
                 NativeAudioAsset *_asset = (NativeAudioAsset*) asset;
                 NSTimeInterval duration = [_asset getDuration];
                 
-                if([currentAudioInControl isEqualToString:audioID]){
+                if([currentAudioInControl isEqual:audioID]){
                     NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
                     
                     //[playInfo setObject:[NSNumber numberWithDouble:duration/1000]  forKey:MPMediaItemPropertyPlaybackDuration];
@@ -773,7 +773,7 @@ static void (mySystemSoundCompletionProc)(SystemSoundID ssID,void* clientData)
                 NativeAudioAsset *_asset = (NativeAudioAsset*) asset;
                 [_asset seekTo:position];
                 
-                if([currentAudioInControl isEqualToString:audioID]){
+                if([currentAudioInControl isEqual:audioID]){
                     NSMutableDictionary *playInfo = [NSMutableDictionary dictionaryWithDictionary:[MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo] ;
                     
                     //[playInfo setObject:@([position intValue] / 1000) forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
